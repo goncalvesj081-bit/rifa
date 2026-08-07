@@ -283,10 +283,11 @@ header{
 <div class="fundo" id="fundo"><div class="sheet" id="sheet"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="config.js"></script>
 <script>
-// Credenciais ficam em config.js, na raiz do repositorio.
-const { SUPABASE_URL, SUPABASE_ANON } = window.RIFA_CONFIG || {};
+// ============================================================
+const SUPABASE_URL  = "https://SEU_PROJETO.supabase.co";
+const SUPABASE_ANON = "SUA_ANON_KEY";
+// ============================================================
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const $  = id => document.getElementById(id);
