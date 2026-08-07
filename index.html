@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B7A5E">
+<title>Rifa diária</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7F9;
+  --surface:#FFFFFF;
+  --linha:#E4EAF0;
+  --ink:#0D1B2A;
+  --ink2:#5F7085;
+  --ink3:#93A2B4;
+  --brand:#0B7A5E;
+  --brand-dark:#08604A;
+  --tint:#E8F4F0;
+  --alerta:#D8452F;
+  --r:14px;
+  --sh1:0 1px 2px rgba(13,27,42,.06);
+  --sh2:0 12px 32px rgba(13,27,42,.14);
+  --barra:88px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Manrope",system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.5;
+  padding:0 0 calc(var(--barra) + 32px);
+}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px}
+
+/* ---------- topo ---------- */
+header{
+  position:sticky;top:0;z-index:10;background:rgba(245,247,249,.88);
+  backdrop-filter:saturate(1.6) blur(12px);border-bottom:1px solid var(--linha);
+  padding:14px 0}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.marca{font-weight:800;font-size:16px;letter-spacing:-.01em}
+.selo{
+  display:inline-flex;align-items:center;gap:6px;background:var(--tint);color:var(--brand-dark);
+  padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.selo svg{flex-shrink:0}
+
+/* ---------- cartão do prêmio ---------- */
+.cartao{background:var(--surface);border:1px solid var(--linha);border-radius:var(--r);box-shadow:var(--sh1)}
+.premio{margin-top:18px;padding:24px 20px 20px;text-align:center;overflow:hidden;position:relative}
+.premio::after{
+  content:"";position:absolute;inset:0 0 auto;height:120px;
+  background:radial-gradient(120% 80% at 50% 0,var(--tint) 0,transparent 70%);z-index:0}
+.premio > *{position:relative;z-index:1}
+.rot{font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.02em}
+.premio .valor{
+  font-family:"DM Mono",monospace;font-weight:500;font-variant-numeric:tabular-nums;
+  font-size:clamp(38px,11.5vw,52px);line-height:1.08;letter-spacing:-.03em;
+  color:var(--brand-dark);margin:6px 0 2px}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;margin-top:8px;
+  background:var(--tint);color:var(--brand-dark);padding:5px 11px;border-radius:999px;
+  font-size:12px;font-weight:600}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--linha);
+  border-top:1px solid var(--linha);margin:20px -20px -20px}
+.stat{background:var(--surface);padding:14px 20px}
+.stat .k{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.stat .v{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;font-size:19px;font-weight:500;margin-top:3px;letter-spacing:-.01em}
+.stat .v.urgente{color:var(--alerta)}
+
+/* ---------- progresso ---------- */
+.progresso{margin-top:14px;padding:16px 18px}
+.progresso .topo{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
+.progresso .topo b{font-family:"DM Mono",monospace;font-weight:500;font-size:14px}
+.progresso .topo span{color:var(--ink2)}
+.trilho{height:6px;background:var(--bg);border-radius:999px;overflow:hidden;margin-top:10px}
+.trilho i{display:block;height:100%;background:var(--brand);border-radius:999px;width:0;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ---------- cartelas ---------- */
+.secao{margin-top:26px}
+.secao h2{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.secao .ajuda{font-size:13px;color:var(--ink2);margin-top:3px}
+
+.abas{display:flex;gap:7px;overflow-x:auto;margin:14px -16px 0;padding:2px 16px 8px;scrollbar-width:none}
+.abas::-webkit-scrollbar{display:none}
+.aba{
+  flex:0 0 auto;background:var(--surface);border:1px solid var(--linha);border-radius:11px;
+  padding:9px 13px;cursor:pointer;color:var(--ink2);text-align:left;
+  font-family:"Manrope",sans-serif;font-size:13px;font-weight:600;line-height:1.25}
+.aba .resto{display:block;font-family:"DM Mono",monospace;font-size:10.5px;font-weight:400;opacity:.8;margin-top:2px}
+.aba[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:var(--sh1)}
+
+.grade{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:6px}
+.n{
+  aspect-ratio:1;background:var(--surface);border:1px solid var(--linha);border-radius:8px;
+  cursor:pointer;color:var(--ink);padding:0;
+  font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:clamp(8.5px,2.4vw,11px);font-weight:500;
+  display:grid;place-items:center}
+.n[data-s="ocupado"]{background:var(--bg);border-color:transparent;color:var(--ink3);opacity:.55;cursor:not-allowed}
+.n[data-sel="1"]{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:var(--sh1)}
+.n:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+.legenda{display:flex;gap:18px;margin-top:14px;font-size:12.5px;color:var(--ink2);flex-wrap:wrap}
+.legenda span{display:flex;align-items:center;gap:7px}
+.chip{width:13px;height:13px;border:1px solid var(--linha);border-radius:4px;background:var(--surface)}
+.chip.sel{background:var(--brand);border-color:var(--brand)}
+.chip.occ{background:var(--bg);border-color:transparent}
+
+/* ---------- prova ---------- */
+.prova{margin-top:26px;padding:18px}
+.prova .cab{display:flex;align-items:center;gap:10px}
+.prova .cab svg{color:var(--brand);flex-shrink:0}
+.prova .cab h3{font-size:15px;font-weight:700}
+.prova p{font-size:13px;color:var(--ink2);margin-top:9px;line-height:1.55}
+.prova dl{margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:7px 14px;align-items:baseline;
+  border-top:1px solid var(--linha);padding-top:14px}
+.prova dt{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.prova dd{font-family:"DM Mono",monospace;font-size:11.5px;color:var(--ink2);word-break:break-all}
+.link{display:inline-flex;align-items:center;gap:6px;margin-top:16px;color:var(--brand-dark);
+  font-size:14px;font-weight:600;text-decoration:none}
+.link:hover{text-decoration:underline}
+
+.rodape{margin-top:22px;text-align:center;font-size:13px;color:var(--ink2);padding-bottom:8px}
+.rodape button{background:none;border:0;color:var(--brand-dark);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline}
+
+/* ---------- barra ---------- */
+.barra{
+  position:fixed;left:0;right:0;bottom:0;z-index:15;
+  background:var(--surface);border-top:1px solid var(--linha);box-shadow:0 -6px 24px rgba(13,27,42,.08);
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  transform:translateY(130%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.barra.on{transform:none}
+.barra .interno{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.barra .resumo{flex:1;min-width:0}
+.barra .qtd{font-size:12px;color:var(--ink2);font-weight:500}
+.barra .total{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;font-size:21px;font-weight:500;letter-spacing:-.02em;margin-top:1px}
+.cta{
+  background:var(--brand);color:#fff;border:0;border-radius:11px;padding:14px 22px;cursor:pointer;
+  font-family:"Manrope",sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em}
+.cta:hover{background:var(--brand-dark)}
+.cta:disabled{opacity:.55;cursor:progress}
+.cta:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* ---------- bottom sheet ---------- */
+.fundo{position:fixed;inset:0;z-index:30;background:rgba(13,27,42,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.fundo.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+  border-radius:20px 20px 0 0;box-shadow:var(--sh2);
+  padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.fundo.on .sheet{transform:none}
+.sheet .pega{width:38px;height:4px;background:var(--linha);border-radius:999px;margin:0 auto 18px}
+.sheet h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sheet .desc{font-size:13.5px;color:var(--ink2);margin-top:6px;line-height:1.55}
+.sheet label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin:16px 0 6px}
+.sheet input{
+  width:100%;background:var(--bg);border:1px solid var(--linha);border-radius:11px;
+  padding:13px 14px;font-family:"Manrope",sans-serif;font-size:16px;color:var(--ink)}
+.sheet input:focus{outline:2px solid var(--brand);outline-offset:0;border-color:transparent;background:var(--surface)}
+.escolhidos{
+  font-family:"DM Mono",monospace;font-size:13px;color:var(--brand-dark);
+  background:var(--tint);border-radius:11px;padding:12px 14px;margin-top:14px;
+  line-height:1.75;word-spacing:6px;word-break:break-all}
+.linhaval{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;
+  padding-top:14px;border-top:1px solid var(--linha)}
+.linhaval .k{font-size:13.5px;color:var(--ink2)}
+.linhaval .v{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;font-size:20px;font-weight:500;letter-spacing:-.02em}
+.acoes{display:flex;gap:9px;margin-top:22px}
+.acoes .cta{flex:1;padding:15px}
+.btn2{flex:0 0 auto;background:var(--bg);color:var(--ink2);border:1px solid var(--linha);border-radius:11px;
+  padding:15px 20px;cursor:pointer;font-family:"Manrope",sans-serif;font-weight:600;font-size:15px}
+.erro{background:#FDEEEC;color:#A32E1E;border-radius:10px;padding:11px 13px;font-size:13.5px;margin-top:14px;line-height:1.5}
+
+.caixapix{background:var(--bg);border-radius:12px;padding:16px;margin-top:16px}
+.caixapix .k{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.caixapix .chave{font-family:"DM Mono",monospace;font-size:14px;word-break:break-all;margin-top:6px;font-weight:500}
+.copiar{margin-top:12px;width:100%;background:var(--surface);border:1px solid var(--linha);border-radius:10px;
+  padding:11px;cursor:pointer;font-family:"Manrope",sans-serif;font-weight:600;font-size:13.5px;color:var(--brand-dark)}
+.prazo{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--alerta);font-weight:600}
+
+/* ---------- estados ---------- */
+.aviso{margin-top:18px;padding:22px 20px;text-align:center}
+.aviso .ic{color:var(--ink3);margin-bottom:10px}
+.aviso h3{font-size:17px;font-weight:700}
+.aviso p{font-size:13.5px;color:var(--ink2);margin-top:7px;line-height:1.55}
+.resultado{font-family:"DM Mono",monospace;font-size:clamp(56px,20vw,84px);font-weight:500;
+  letter-spacing:.02em;color:var(--brand-dark);line-height:1;margin:6px 0 4px}
+.skel{background:linear-gradient(90deg,var(--linha) 25%,#EEF2F6 50%,var(--linha) 75%);
+  background-size:200% 100%;animation:sk 1.3s infinite;border-radius:8px;color:transparent!important}
+@keyframes sk{to{background-position:-200% 0}}
+.oculto{display:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head">
+    <span class="marca">Rifa diária</span>
+    <span class="selo">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span id="seloTxt">Sorteio auditável</span>
+    </span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="cartao premio">
+    <p class="rot">Prêmio de hoje</p>
+    <p class="valor skel" id="premio">R$ 000,00</p>
+    <span class="pill oculto" id="acumulou">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 15 7-7 7 7"/></svg>
+      Acumulado do ciclo anterior
+    </span>
+    <div class="stats">
+      <div class="stat"><p class="k">Fecha em</p><p class="v" id="contador">--:--:--</p></div>
+      <div class="stat"><p class="k">Cada número</p><p class="v" id="preco">R$ 2,00</p></div>
+    </div>
+  </div>
+
+  <div class="cartao progresso">
+    <div class="topo">
+      <span>Números já tomados</span>
+      <b id="progTxt">0 / 1000</b>
+    </div>
+    <div class="trilho"><i id="progBar"></i></div>
+  </div>
+
+  <div id="aviso" class="cartao aviso oculto"></div>
+
+  <div id="loja">
+    <div class="secao">
+      <h2>Escolha seus números</h2>
+      <p class="ajuda">Toque para selecionar. Pode pegar quantos quiser.</p>
+      <div class="abas" role="tablist" id="abas"></div>
+    </div>
+    <div class="grade" id="grade"></div>
+    <div class="legenda">
+      <span><i class="chip"></i>livre</span>
+      <span><i class="chip sel"></i>selecionado</span>
+      <span><i class="chip occ"></i>já vendido</span>
+    </div>
+  </div>
+
+  <div class="cartao prova">
+    <div class="cab">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+      <h3>Ninguém escolhe o número</h3>
+    </div>
+    <p>Ele vem de três dados travados em horários diferentes: uma chave secreta trancada antes das vendas, a lista de compras congelada no fechamento e uma rodada da rede pública drand. Qualquer pessoa refaz a conta.</p>
+    <dl id="provaDados"></dl>
+    <a class="link" href="verificar.html">
+      Conferir o sorteio
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </a>
+  </div>
+
+  <p class="rodape">Já reservou? <button id="btnConsulta">Consultar minha reserva</button></p>
+
+</div>
+
+<div class="barra" id="barra">
+  <div class="interno">
+    <div class="resumo">
+      <p class="qtd" id="barraQtd">0 números</p>
+      <p class="total" id="barraTotal">R$ 0,00</p>
+    </div>
+    <button class="cta" id="btnReservar">Reservar</button>
+  </div>
+</div>
+
+<div class="fundo" id="fundo"><div class="sheet" id="sheet"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+// Credenciais ficam em config.js, na raiz do repositorio.
+const { SUPABASE_URL, SUPABASE_ANON } = window.RIFA_CONFIG || {};
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $  = id => document.getElementById(id);
+
+const estado = { ciclo:null, cfg:{}, ocupados:new Set(), sel:new Set(), cartela:0, timer:null };
+
+const brl = c => (c/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const pad = n => String(n).padStart(3,"0");
+const esc = s => String(s).replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+// ---------------- carga ----------------
+async function iniciar(){
+  try{
+    const { data: cfg } = await sb.from("config_publica").select("chave,valor");
+    (cfg||[]).forEach(r => estado.cfg[r.chave] = r.valor);
+    $("preco").textContent = brl(Number(estado.cfg.preco_centavos || 200));
+
+    const { data: ciclos } = await sb.from("ciclo_publico")
+      .select("*").order("numero_ciclo",{ascending:false}).limit(1);
+    const ciclo = ciclos && ciclos[0];
+    if(!ciclo){ semCiclo(); return; }
+    estado.ciclo = ciclo;
+
+    $("premio").textContent = brl(ciclo.premio_centavos);
+    $("premio").classList.remove("skel");
+    $("seloTxt").textContent = "Ciclo " + ciclo.numero_ciclo;
+    montarProva(ciclo);
+
+    const { data: nums } = await sb.from("numeros")
+      .select("numero,status").eq("ciclo_id", ciclo.id).neq("status","livre");
+    (nums||[]).forEach(n => estado.ocupados.add(n.numero));
+    atualizarProgresso();
+
+    if(ciclo.status !== "aberto" || new Date(ciclo.fechamento) < new Date()){
+      fecharLoja(ciclo); return;
+    }
+    montarAbas(); desenharGrade(); ligarRelogio(); ligarRealtime();
+  }catch(e){
+    mostrarAviso("alerta","Não foi possível carregar",
+      "Verifique sua conexão e atualize a página em instantes.");
+  }
+}
+
+function semCiclo(){
+  $("premio").classList.remove("skel");
+  $("premio").textContent = "—";
+  mostrarAviso("relogio","Nenhum ciclo aberto","As vendas do próximo ciclo começam às 19h.");
+}
+
+const ICONES = {
+  alerta:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16.5v.01"/></svg>',
+  relogio:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  trofeu:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3M10 19h4M12 14v5"/></svg>'
+};
+
+function mostrarAviso(ic, titulo, texto, extra){
+  $("aviso").innerHTML =
+    '<div class="ic">' + ICONES[ic] + '</div>' +
+    (extra || "") +
+    '<h3>' + esc(titulo) + '</h3><p>' + esc(texto) + '</p>';
+  $("aviso").classList.remove("oculto");
+  $("loja").classList.add("oculto");
+}
+
+function fecharLoja(ciclo){
+  clearInterval(estado.timer);
+  $("barra").classList.remove("on");
+  const temResultado = ciclo.numero_sorteado !== null && ciclo.numero_sorteado !== undefined;
+
+  if(temResultado){
+    $("contador").textContent = "Sorteado";
+    mostrarAviso("trofeu","Número sorteado",
+      "Confira o cálculo na página de verificação. O próximo ciclo abre às 19h.",
+      '<p class="resultado">' + pad(ciclo.numero_sorteado) + '</p>');
+  }else{
+    $("contador").textContent = "Encerrado";
+    $("contador").classList.add("urgente");
+    mostrarAviso("relogio","Vendas encerradas",
+      "O sorteio deste ciclo sai às 17h. O próximo ciclo abre às 19h.");
+  }
+}
+
+function atualizarProgresso(){
+  const t = estado.ocupados.size;
+  $("progTxt").textContent = t + " / 1000";
+  $("progBar").style.width = (t/10) + "%";
+}
+
+function montarProva(c){
+  const linhas = [
+    ["Chave",  c.server_seed_hash ? c.server_seed_hash.slice(0,28) + "…" : "—"],
+    ["Rodada drand", c.drand_round ?? "—"],
+    ["Vendas", c.vendas_hash ? c.vendas_hash.slice(0,28) + "…" : "congela às 16:59"]
+  ];
+  $("provaDados").innerHTML = linhas.map(([t,d]) => "<dt>"+t+"</dt><dd>"+esc(d)+"</dd>").join("");
+}
+
+// ---------------- grade ----------------
+function montarAbas(){
+  const abas = $("abas"); abas.innerHTML = "";
+  for(let c=0;c<10;c++){
+    const b = document.createElement("button");
+    b.className="aba"; b.setAttribute("role","tab");
+    b.setAttribute("aria-selected", c===estado.cartela ? "true":"false");
+    b.innerHTML = c+"00 – "+c+"99<span class='resto'>"+livresNaCartela(c)+" livres</span>";
+    b.addEventListener("click", () => { estado.cartela=c; montarAbas(); desenharGrade(); });
+    abas.appendChild(b);
+  }
+}
+function livresNaCartela(c){
+  let n=0; for(let i=c*100;i<c*100+100;i++) if(!estado.ocupados.has(i)) n++;
+  return n;
+}
+function desenharGrade(){
+  const g = $("grade"), frag = document.createDocumentFragment();
+  g.innerHTML = "";
+  const base = estado.cartela*100;
+  for(let i=base;i<base+100;i++){
+    const b = document.createElement("button");
+    b.className="n"; b.textContent = pad(i); b.dataset.n = i;
+    if(estado.ocupados.has(i)){ b.dataset.s="ocupado"; b.disabled=true; b.setAttribute("aria-label",pad(i)+", já vendido"); }
+    else if(estado.sel.has(i)) b.dataset.sel="1";
+    frag.appendChild(b);
+  }
+  g.appendChild(frag);
+}
+$("grade").addEventListener("click", e => {
+  const b = e.target.closest(".n");
+  if(!b || b.disabled) return;
+  const n = Number(b.dataset.n);
+  if(estado.sel.has(n)){ estado.sel.delete(n); b.removeAttribute("data-sel"); }
+  else { estado.sel.add(n); b.dataset.sel="1"; }
+  atualizarBarra();
+});
+function atualizarBarra(){
+  const q = estado.sel.size, p = Number(estado.cfg.preco_centavos || 200);
+  $("barraQtd").textContent = q===1 ? "1 número selecionado" : q + " números selecionados";
+  $("barraTotal").textContent = brl(q*p);
+  $("barra").classList.toggle("on", q>0);
+}
+
+// ---------------- relógio ----------------
+function ligarRelogio(){
+  const fim = new Date(estado.ciclo.fechamento).getTime();
+  const tick = () => {
+    const r = fim - Date.now();
+    if(r <= 0){ fecharLoja(estado.ciclo); return; }
+    const h=Math.floor(r/3600000), m=Math.floor(r/60000)%60, s=Math.floor(r/1000)%60;
+    $("contador").textContent = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+    $("contador").classList.toggle("urgente", r < 3600000);
+  };
+  tick(); estado.timer = setInterval(tick,1000);
+}
+
+// ---------------- realtime ----------------
+function ligarRealtime(){
+  sb.channel("grade-"+estado.ciclo.id)
+    .on("postgres_changes",
+      { event:"UPDATE", schema:"public", table:"numeros", filter:"ciclo_id=eq."+estado.ciclo.id },
+      ({ new: n }) => {
+        if(!n) return;
+        if(n.status === "livre") estado.ocupados.delete(n.numero);
+        else { estado.ocupados.add(n.numero); if(estado.sel.delete(n.numero)) atualizarBarra(); }
+        const cel = document.querySelector('.n[data-n="'+n.numero+'"]');
+        if(cel){
+          if(n.status === "livre"){ cel.removeAttribute("data-s"); cel.disabled=false; }
+          else { cel.dataset.s="ocupado"; cel.disabled=true; cel.removeAttribute("data-sel"); }
+        }
+        montarAbas(); atualizarProgresso();
+      })
+    .subscribe();
+}
+
+// ---------------- sheet ----------------
+function abrir(html){ $("sheet").innerHTML = '<div class="pega"></div>' + html; $("fundo").classList.add("on"); }
+function fechar(){ $("fundo").classList.remove("on"); }
+$("fundo").addEventListener("click", e => { if(e.target === $("fundo")) fechar(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") fechar(); });
+
+$("btnReservar").addEventListener("click", () => {
+  if(!estado.sel.size) return;
+  const nums = [...estado.sel].sort((a,b)=>a-b);
+  const p = Number(estado.cfg.preco_centavos || 200);
+  abrir(
+    '<h2>Confirmar reserva</h2>' +
+    '<p class="desc">Seus dados servem só para o organizador confirmar o pagamento e te encontrar se você ganhar.</p>' +
+    '<div class="escolhidos">' + nums.map(pad).join(" ") + '</div>' +
+    '<div class="linhaval"><span class="k">' + nums.length + ' × ' + brl(p) + '</span><span class="v">' + brl(nums.length*p) + '</span></div>' +
+    '<label for="mNome">Nome completo</label><input id="mNome" autocomplete="name">' +
+    '<label for="mTel">WhatsApp com DDD</label><input id="mTel" inputmode="tel" autocomplete="tel" placeholder="37 99999 9999">' +
+    '<div id="mErroBox"></div>' +
+    '<div class="acoes"><button class="btn2" id="mVoltar">Voltar</button><button class="cta" id="mOk">Reservar</button></div>'
+  );
+  $("mVoltar").addEventListener("click", fechar);
+  $("mOk").addEventListener("click", () => enviarReserva(nums));
+});
+
+async function enviarReserva(nums){
+  const nome = $("mNome").value.trim(), tel = $("mTel").value.trim();
+  const box = $("mErroBox"), ok = $("mOk");
+  box.innerHTML = ""; ok.disabled = true; ok.textContent = "Enviando…";
+
+  const { data, error } = await sb.rpc("reservar_numeros",
+    { p_numeros:nums, p_nome:nome, p_telefone:tel });
+
+  ok.disabled = false; ok.textContent = "Reservar";
+  if(error){ box.innerHTML = '<p class="erro">' + esc(error.message || "Não foi possível reservar. Tente de novo.") + '</p>'; return; }
+
+  estado.sel.clear(); atualizarBarra(); desenharGrade(); montarAbas();
+  telaPix(data);
+}
+
+function telaPix(venda){
+  const chave = estado.cfg.pix_chave || "";
+  const nome  = estado.cfg.pix_nome || "";
+  const zap   = estado.cfg.whatsapp;
+  const nums  = (venda.numeros||[]).map(pad).join(" ");
+  const min   = Number(estado.cfg.reserva_minutos || 15);
+
+  abrir(
+    '<h2>Falta pagar</h2>' +
+    '<p class="desc">Seus números ficam reservados por ' + min + ' minutos. Depois disso voltam para a grade.</p>' +
+    '<div class="escolhidos">' + nums + '</div>' +
+    '<div class="caixapix">' +
+      '<p class="k">Chave PIX' + (nome ? ' — ' + esc(nome) : '') + '</p>' +
+      '<p class="chave">' + esc(chave || "não configurada") + '</p>' +
+      (chave ? '<button class="copiar" id="btnCopiar">Copiar chave</button>' : '') +
+    '</div>' +
+    '<div class="linhaval"><span class="k">Total a pagar</span><span class="v">' + brl(venda.valor) + '</span></div>' +
+    '<p class="prazo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Reserva nº ' + venda.venda_id + '</p>' +
+    (zap ? '<p class="desc" style="margin-top:12px">Envie o comprovante no WhatsApp <a href="https://wa.me/'+esc(zap)+'?text='+encodeURIComponent("Reserva "+venda.venda_id+" - números "+nums)+'" style="color:var(--brand-dark);font-weight:600">'+esc(zap)+'</a> para confirmar.</p>' : '') +
+    '<div class="acoes"><button class="cta" id="mFechar">Entendi</button></div>'
+  );
+  $("mFechar").addEventListener("click", fechar);
+  const bc = $("btnCopiar");
+  if(bc) bc.addEventListener("click", async () => {
+    try{ await navigator.clipboard.writeText(chave); bc.textContent = "Chave copiada"; }
+    catch(e){ bc.textContent = "Copie a chave manualmente acima"; }
+  });
+}
+
+// ---------------- consulta ----------------
+$("btnConsulta").addEventListener("click", () => {
+  abrir(
+    '<h2>Consultar reserva</h2>' +
+    '<p class="desc">Informe o número da reserva e o WhatsApp que você usou na compra.</p>' +
+    '<label for="cId">Número da reserva</label><input id="cId" inputmode="numeric">' +
+    '<label for="cTel">WhatsApp com DDD</label><input id="cTel" inputmode="tel">' +
+    '<div id="cErroBox"></div>' +
+    '<div class="acoes"><button class="btn2" id="cVoltar">Voltar</button><button class="cta" id="cOk">Consultar</button></div>'
+  );
+  $("cVoltar").addEventListener("click", fechar);
+  $("cOk").addEventListener("click", consultar);
+});
+
+const ROTULO = { reservado:"Aguardando pagamento", pago:"Pagamento confirmado",
+                 expirado:"Reserva expirada", cancelado:"Reserva cancelada" };
+
+async function consultar(){
+  const box = $("cErroBox"), ok = $("cOk");
+  box.innerHTML = ""; ok.disabled = true; ok.textContent = "Buscando…";
+  const { data, error } = await sb.rpc("consultar_venda",
+    { p_venda_id:Number($("cId").value.trim()), p_telefone:$("cTel").value.trim() });
+  ok.disabled = false; ok.textContent = "Consultar";
+
+  if(error){ box.innerHTML = '<p class="erro">' + esc(error.message) + '</p>'; return; }
+
+  abrir(
+    '<h2>Reserva nº ' + data.venda_id + '</h2>' +
+    '<p class="desc">' + esc(data.nome) + '</p>' +
+    '<div class="escolhidos">' + (data.numeros||[]).map(pad).join(" ") + '</div>' +
+    '<div class="linhaval"><span class="k">' + esc(ROTULO[data.status] || data.status) + '</span><span class="v">' + brl(data.valor) + '</span></div>' +
+    '<div class="acoes"><button class="cta" id="qFechar">Fechar</button></div>'
+  );
+  $("qFechar").addEventListener("click", fechar);
+}
+
+iniciar();
+</script>
+</body>
+</html>

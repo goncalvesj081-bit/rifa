@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B7A5E">
+<title>Conferir o sorteio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7F9;
+  --surface:#FFFFFF;
+  --linha:#E4EAF0;
+  --ink:#0D1B2A;
+  --ink2:#5F7085;
+  --ink3:#93A2B4;
+  --brand:#0B7A5E;
+  --brand-dark:#08604A;
+  --tint:#E8F4F0;
+  --alerta:#D8452F;
+  --alerta-tint:#FDEEEC;
+  --r:14px;
+  --sh1:0 1px 2px rgba(13,27,42,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Manrope",system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.5;padding-bottom:56px}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px}
+
+header{
+  position:sticky;top:0;z-index:10;background:rgba(245,247,249,.88);
+  backdrop-filter:saturate(1.6) blur(12px);border-bottom:1px solid var(--linha);padding:14px 0}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.voltar{display:inline-flex;align-items:center;gap:6px;color:var(--ink2);
+  font-size:14px;font-weight:600;text-decoration:none}
+.voltar:hover{color:var(--ink)}
+.selo{display:inline-flex;align-items:center;gap:6px;background:var(--tint);color:var(--brand-dark);
+  padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600}
+
+.cartao{background:var(--surface);border:1px solid var(--linha);border-radius:var(--r);box-shadow:var(--sh1)}
+
+.intro{margin-top:20px;padding:24px 20px}
+.intro h1{font-size:24px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
+.intro p{font-size:14px;color:var(--ink2);margin-top:10px;line-height:1.6}
+
+.form{margin-top:14px;padding:20px}
+.form h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.form .ajuda{font-size:13px;color:var(--ink2);line-height:1.5}
+label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin:16px 0 6px}
+label .op{font-weight:400;color:var(--ink3)}
+input{
+  width:100%;background:var(--bg);border:1px solid var(--linha);border-radius:11px;
+  padding:12px 13px;color:var(--ink);
+  font-family:"DM Mono",monospace;font-size:13.5px;line-height:1.5;word-break:break-all}
+input::placeholder{font-family:"Manrope",sans-serif;font-size:13.5px;color:var(--ink3)}
+input:focus{outline:2px solid var(--brand);outline-offset:0;border-color:transparent;background:var(--surface)}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.cta{
+  margin-top:22px;width:100%;background:var(--brand);color:#fff;border:0;border-radius:11px;
+  padding:15px;cursor:pointer;font-family:"Manrope",sans-serif;font-weight:700;font-size:15px}
+.cta:hover{background:var(--brand-dark)}
+.cta:disabled{opacity:.55;cursor:progress}
+.cta:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* ---------- resultado ---------- */
+.saida{margin-top:14px;display:none}
+.saida.on{display:block}
+
+.veredito{padding:26px 20px 22px;text-align:center;overflow:hidden;position:relative}
+.veredito::after{content:"";position:absolute;inset:0 0 auto;height:130px;
+  background:radial-gradient(120% 80% at 50% 0,var(--tint) 0,transparent 70%);z-index:0}
+.veredito.ruim::after{background:radial-gradient(120% 80% at 50% 0,var(--alerta-tint) 0,transparent 70%)}
+.veredito > *{position:relative;z-index:1}
+.veredito .rot{font-size:12px;font-weight:600;color:var(--ink2)}
+.veredito .n{
+  font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:clamp(64px,22vw,92px);font-weight:500;line-height:1;letter-spacing:.01em;
+  color:var(--brand-dark);margin:8px 0 10px}
+.veredito.ruim .n{color:var(--alerta)}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;
+  font-size:13px;font-weight:700;background:var(--tint);color:var(--brand-dark)}
+.veredito.ruim .tag{background:var(--alerta-tint);color:#A32E1E}
+
+.passos{margin-top:14px;padding:6px 20px}
+.passo{display:grid;grid-template-columns:30px 1fr auto;gap:13px;align-items:start;
+  padding:17px 0;border-bottom:1px solid var(--linha)}
+.passo:last-child{border-bottom:0}
+.marca{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;
+  background:var(--tint);color:var(--brand)}
+.passo.falha .marca{background:var(--alerta-tint);color:var(--alerta)}
+.passo h3{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.passo p{font-size:13px;color:var(--ink2);margin-top:5px;line-height:1.5}
+.passo code{font-family:"DM Mono",monospace;font-size:11.5px;color:var(--ink2);
+  background:var(--bg);padding:2px 6px;border-radius:5px;word-break:break-all;display:inline-block;margin-top:5px}
+.chip{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;align-self:center;
+  background:var(--tint);color:var(--brand-dark)}
+.passo.falha .chip{background:var(--alerta-tint);color:#A32E1E}
+
+.explica{margin-top:14px;padding:20px}
+.explica h2{font-size:15px;font-weight:700}
+.explica ol{margin:12px 0 0;padding:0;list-style:none;counter-reset:p}
+.explica li{counter-increment:p;position:relative;padding-left:34px;margin-top:14px;
+  font-size:13.5px;color:var(--ink2);line-height:1.55}
+.explica li::before{
+  content:counter(p);position:absolute;left:0;top:0;width:23px;height:23px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--linha);color:var(--ink);
+  font-family:"DM Mono",monospace;font-size:12px;display:grid;place-items:center}
+.explica li b{color:var(--ink);font-weight:700}
+.oculto{display:none!important}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head">
+    <a class="voltar" href="index.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Voltar
+    </a>
+    <span class="selo">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Verificação
+    </span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="cartao intro">
+    <h1>Confira você mesmo o número</h1>
+    <p>O número não é escolhido por ninguém. Ele nasce de três dados travados em momentos diferentes do ciclo. Cole os valores publicados e o cálculo é refeito aqui, no seu aparelho — nada passa pelo servidor da rifa.</p>
+  </div>
+
+  <div class="cartao form">
+    <h2>Dados do ciclo</h2>
+    <p class="ajuda">Todos ficam publicados na página da rifa.</p>
+
+    <label for="seed">Chave secreta revelada</label>
+    <input id="seed" spellcheck="false" autocomplete="off" placeholder="publicada depois do sorteio">
+
+    <label for="hash">Impressão da chave <span class="op">— publicada às 18:59</span></label>
+    <input id="hash" spellcheck="false" autocomplete="off" placeholder="antes de abrir as vendas">
+
+    <label for="vendas">Impressão da lista de vendas <span class="op">— publicada às 16:59</span></label>
+    <input id="vendas" spellcheck="false" autocomplete="off" placeholder="no fechamento das vendas">
+
+    <div class="dupla">
+      <div>
+        <label for="rodada">Rodada drand</label>
+        <input id="rodada" inputmode="numeric" autocomplete="off" placeholder="ex. 5842019">
+      </div>
+      <div>
+        <label for="sorteado">Número anunciado</label>
+        <input id="sorteado" inputmode="numeric" maxlength="3" autocomplete="off" placeholder="000">
+      </div>
+    </div>
+
+    <button class="cta" id="btn">Refazer o cálculo</button>
+  </div>
+
+  <section class="saida" id="saida" aria-live="polite">
+    <div class="cartao veredito" id="veredito">
+      <p class="rot">Número recalculado</p>
+      <p class="n" id="numOut">000</p>
+      <span class="tag" id="tag"></span>
+    </div>
+    <div class="cartao passos" id="passos"></div>
+  </section>
+
+  <div class="cartao explica">
+    <h2>Por que isso prova alguma coisa</h2>
+    <ol>
+      <li><b>A chave vem antes.</b> Ela é sorteada e trancada às 18:59, antes de a primeira rifa ser vendida. Só a impressão dela vai ao ar, então o organizador não consegue trocá-la depois.</li>
+      <li><b>A lista congela no fechamento.</b> Às 16:59 a relação de números vendidos vira uma impressão pública. Ninguém entra na lista depois de ver o resultado.</li>
+      <li><b>A rodada é de fora.</b> O drand é uma rede pública que gera valores aleatórios em horários fixos. A rodada das 17h é marcada com antecedência, e nem o organizador nem você conseguem prever o que ela vai trazer.</li>
+      <li><b>Os três viram um só número.</b> Misturados, produzem um resultado que só existe no instante do sorteio — e que qualquer pessoa recalcula, como esta página acabou de fazer.</li>
+    </ol>
+  </div>
+
+</div>
+
+<script>
+const CHAIN = "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971";
+
+const OK   = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+const FAIL = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+async function sha256(txt){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(txt));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+function passo(titulo, descricao, ok){
+  const el = document.createElement("div");
+  el.className = "passo" + (ok ? "" : " falha");
+  el.innerHTML =
+    '<span class="marca">' + (ok ? OK : FAIL) + '</span>' +
+    '<div><h3>' + titulo + '</h3><p>' + descricao + '</p></div>' +
+    '<span class="chip">' + (ok ? "confere" : "não bate") + '</span>';
+  $("passos").appendChild(el);
+  return ok;
+}
+
+function mostrarVeredito(numero, bom, texto){
+  $("numOut").textContent = numero;
+  $("veredito").classList.toggle("ruim", !bom);
+  $("tag").innerHTML = (bom ? OK : FAIL) + " " + texto;
+}
+
+async function verificar(){
+  const seed      = $("seed").value.trim().toLowerCase();
+  const hash      = $("hash").value.trim().toLowerCase();
+  const vendas    = $("vendas").value.trim().toLowerCase();
+  const rodada    = $("rodada").value.trim();
+  const anunciado = $("sorteado").value.trim();
+
+  $("passos").innerHTML = "";
+  $("saida").classList.add("on");
+
+  if(!seed || !hash || !vendas || !rodada || anunciado === ""){
+    mostrarVeredito("—", false, "Faltam dados");
+    passo("Preencha os cinco campos",
+          "Todos os valores ficam publicados na página da rifa, no bloco de verificação.", false);
+    return;
+  }
+
+  let tudoOk = true;
+
+  // 1 - a chave revelada corresponde à impressão publicada antes das vendas
+  const calc = await sha256(seed);
+  const okChave = calc === hash;
+  tudoOk = passo("A chave estava trancada",
+    "Impressão recalculada da chave:<br><code>" + esc(calc) + "</code>", okChave) && tudoOk;
+
+  // 2 - a rodada bate com a rede pública
+  let randomness = null;
+  try{
+    const r = await fetch("https://api.drand.sh/" + encodeURIComponent(CHAIN) + "/public/" + encodeURIComponent(rodada));
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    randomness = (await r.json()).randomness;
+    passo("Rodada pública do drand",
+      "Valor lido direto da rede:<br><code>" + esc(randomness) + "</code>", true);
+  }catch(e){
+    passo("Rodada pública do drand",
+      "Não foi possível ler a rodada " + esc(rodada) + " agora. Confira o número da rodada e tente de novo em instantes.", false);
+    mostrarVeredito("—", false, "Verificação incompleta");
+    return;
+  }
+
+  // 3 - o número sai da mistura dos três
+  const digest = await sha256(seed + ":" + randomness + ":" + vendas);
+  const numero = Number(BigInt("0x" + digest) % 1000n);
+  const txt = String(numero).padStart(3,"0");
+  const bate = numero === Number(anunciado);
+  tudoOk = passo("O número vem da mistura",
+    "chave + rodada + lista de vendas<br><code>" + esc(digest.slice(0,40)) + "…</code><br>resto da divisão por 1000", bate) && tudoOk;
+
+  mostrarVeredito(txt, tudoOk, tudoOk ? "Sorteio confere" : "Os dados não batem");
+}
+
+$("btn").addEventListener("click", async () => {
+  const b = $("btn");
+  b.disabled = true; b.textContent = "Calculando…";
+  try{ await verificar(); }
+  finally{ b.disabled = false; b.textContent = "Refazer o cálculo"; }
+});
+</script>
+</body>
+</html>
