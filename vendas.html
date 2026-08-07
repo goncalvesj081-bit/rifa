@@ -146,6 +146,25 @@ header{position:sticky;top:0;z-index:10;background:rgba(245,247,249,.9);
 .hinfo b{color:var(--ink);font-weight:600}
 .hcom{font-family:"DM Mono",monospace;font-size:13.5px;font-weight:500;color:var(--brand-dark);white-space:nowrap}
 
+/* ---------- bottom sheet ---------- */
+.fundo{position:fixed;inset:0;z-index:40;background:rgba(13,27,42,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.fundo.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+  border-radius:20px 20px 0 0;box-shadow:var(--sh2);
+  padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow-y:auto;transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.fundo.on .sheet{transform:none}
+.sheet .pega{width:38px;height:4px;background:var(--linha);border-radius:999px;margin:0 auto 18px}
+.sheet h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sheet .desc{font-size:13.5px;color:var(--ink2);margin-top:6px;line-height:1.55}
+.acoes{display:flex;gap:9px;margin-top:22px}
+.acoes .cta{flex:1;margin-top:0;padding:15px}
+.acoes .btn2{flex:0 0 auto;padding:15px 20px}
+.okbox{background:var(--tint);color:var(--brand-dark);border-radius:10px;padding:11px 13px;
+  font-size:13.5px;margin-top:14px;line-height:1.45;font-weight:600}
+
 .toast{position:fixed;left:16px;right:16px;bottom:20px;z-index:50;max-width:520px;margin:0 auto;
   background:var(--ink);color:#fff;border-radius:12px;padding:13px 16px;font-size:14px;font-weight:600;
   box-shadow:var(--sh2);transform:translateY(140%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
@@ -178,6 +197,9 @@ header{position:sticky;top:0;z-index:10;background:rgba(245,247,249,.9);
         <span class="badge off" id="hStatus">—</span>
         <button class="iconbtn" id="btnAtualizar" title="Atualizar" aria-label="Atualizar">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>
+        </button>
+        <button class="iconbtn" id="btnSenha" title="Trocar senha" aria-label="Trocar senha">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v-3a6 6 0 0 1 6-6h1"/><circle cx="16" cy="9" r="5"/><path d="M2 21v-3"/></svg>
         </button>
         <button class="iconbtn" id="btnSair" title="Sair" aria-label="Sair">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
@@ -229,6 +251,7 @@ header{position:sticky;top:0;z-index:10;background:rgba(245,247,249,.9);
   </div>
 </div>
 
+<div class="fundo" id="fundo"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -484,6 +507,53 @@ async function carregarHistorico(){
         brl(c.vendido) + (c.ganhou_aqui ? ' · <b>ganhou aqui</b>' : '') + '</span>' +
       '<span class="hcom">' + brl(c.comissao) + '</span>' +
     '</div>').join("");
+}
+
+// ---------------- trocar senha ----------------
+function abrirSheet(html){ $("sheet").innerHTML = '<div class="pega"></div>' + html; $("fundo").classList.add("on"); }
+function fecharSheet(){ $("fundo").classList.remove("on"); }
+$("fundo").addEventListener("click", e => { if(e.target === $("fundo")) fecharSheet(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") fecharSheet(); });
+
+$("btnSenha").addEventListener("click", () => {
+  abrirSheet(
+    '<h2>Trocar senha</h2>' +
+    '<p class="desc">A troca vale a partir do próximo acesso. Você continua conectado aqui.</p>' +
+    '<label for="pNova">Nova senha</label>' +
+    '<input id="pNova" type="password" autocomplete="new-password" placeholder="mínimo 6 caracteres">' +
+    '<label for="pConf">Repita a nova senha</label>' +
+    '<input id="pConf" type="password" autocomplete="new-password">' +
+    '<div id="pErro"></div>' +
+    '<div class="acoes"><button class="btn2" id="pVoltar">Cancelar</button>' +
+    '<button class="cta" id="pSalvar">Salvar senha</button></div>'
+  );
+  $("pVoltar").addEventListener("click", fecharSheet);
+  $("pSalvar").addEventListener("click", trocarSenha);
+  $("pConf").addEventListener("keydown", e => { if(e.key === "Enter") trocarSenha(); });
+});
+
+async function trocarSenha(){
+  const b = $("pSalvar"), box = $("pErro");
+  const nova = $("pNova").value, conf = $("pConf").value;
+  box.innerHTML = "";
+
+  if(nova.length < 6){
+    box.innerHTML = '<p class="erro">A senha precisa ter ao menos 6 caracteres.</p>'; return;
+  }
+  if(nova !== conf){
+    box.innerHTML = '<p class="erro">As duas senhas não são iguais.</p>'; return;
+  }
+
+  b.disabled = true; b.textContent = "Salvando…";
+  const { error } = await sb.auth.updateUser({ password: nova });
+  b.disabled = false; b.textContent = "Salvar senha";
+
+  if(error){
+    box.innerHTML = '<p class="erro">' + esc(error.message) + '</p>'; return;
+  }
+  box.innerHTML = '<p class="okbox">Senha alterada. Use a nova no próximo acesso.</p>';
+  $("pNova").value = ""; $("pConf").value = "";
+  setTimeout(fecharSheet, 1800);
 }
 
 verificarSessao();
