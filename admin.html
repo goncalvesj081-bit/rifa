@@ -757,7 +757,10 @@ $("listaVendedores").addEventListener("click", async e => {
 
 $("btnNovoVendedor").addEventListener("click", () => formVendedor(null));
 
+let vendedorEditando = null;
+
 function formVendedor(v){
+  vendedorEditando = v;
   const novo = !v;
   abrirSheet(
     '<h2>' + (novo ? "Novo vendedor" : "Editar vendedor") + '</h2>' +
@@ -817,10 +820,14 @@ async function salvarVendedor(id){
 
   b.disabled = true; b.textContent = "Salvando…";
 
+  // A Edge Function só entra quando há conta para criar ou senha para trocar.
+  // Mudar nome, código, comissão ou situação vai direto pela RPC.
+  const emailAntigo = (vendedorEditando && vendedorEditando.email || "").toLowerCase();
+  const precisaLogin = !!senha || (!!email && email.toLowerCase() !== emailAntigo);
+
   let resultado, erro;
 
-  if(email){
-    // Com e-mail, passa pela Edge Function, que é quem pode criar a conta
+  if(precisaLogin){
     try{
       const { data: s } = await sb.auth.getSession();
       const r = await fetch(SUPABASE_URL + "/functions/v1/vendedores", {
@@ -830,14 +837,15 @@ async function salvarVendedor(id){
         body: JSON.stringify({ ...corpo, email, senha })
       });
       if(r.status === 404){
-        erro = "A função vendedores ainda não foi publicada. Rode: supabase functions deploy vendedores";
+        erro = "A função vendedores ainda não foi publicada. Rode: supabase functions deploy vendedores --no-verify-jwt";
       }else{
         const j = await r.json();
         if(!r.ok) erro = j.erro || "Não foi possível salvar.";
         else resultado = j;
       }
     }catch(e){
-      erro = "Falha de conexão com o servidor.";
+      erro = "Não foi possível falar com a função vendedores. Publique com: " +
+             "supabase functions deploy vendedores --no-verify-jwt";
     }
   }else{
     const { data, error } = await sb.rpc("admin_vendedor_salvar", {
