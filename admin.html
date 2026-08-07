@@ -1,121 +1,1056 @@
--- ============================================================
--- 05_vendedor_login.sql
--- Permite que a Edge Function grave o vendedor apos criar a conta
--- no Auth, e passa a trazer o e-mail na listagem do painel.
--- Rode depois de 04_vendedores.sql
--- ============================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B7A5E">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel do organizador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7F9;--surface:#FFFFFF;--linha:#E4EAF0;
+  --ink:#0D1B2A;--ink2:#5F7085;--ink3:#93A2B4;
+  --brand:#0B7A5E;--brand-dark:#08604A;--tint:#E8F4F0;
+  --alerta:#D8452F;--alerta-tint:#FDEEEC;
+  --aviso:#B26A00;--aviso-tint:#FDF2E2;
+  --r:14px;--sh1:0 1px 2px rgba(13,27,42,.06);--sh2:0 12px 32px rgba(13,27,42,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.5;padding-bottom:48px}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+.cartao{background:var(--surface);border:1px solid var(--linha);border-radius:var(--r);box-shadow:var(--sh1)}
+.oculto{display:none!important}
 
--- ------------------------------------------------------------
--- Gravacao sem checagem de admin.
--- Nao recebe grant para ninguem: so o service_role alcanca,
--- e o service_role e usado apenas dentro da Edge Function,
--- que por sua vez verifica is_admin() antes de chamar.
--- ------------------------------------------------------------
-create or replace function vendedor_salvar_interno(
-  p_id           bigint default null,
-  p_nome         text default null,
-  p_telefone     text default null,
-  p_codigo       text default null,
-  p_comissao_pct numeric default null,
-  p_ativo        boolean default true,
-  p_user_id      uuid default null
-) returns json
-language plpgsql security definer set search_path = public as $$
-declare v_id bigint; v_cod text;
-begin
-  if length(trim(coalesce(p_nome,''))) < 3 then
-    raise exception 'Informe o nome do vendedor.';
-  end if;
+/* ---------- login ---------- */
+.login{min-height:100dvh;display:grid;place-items:center;padding:20px}
+.login .cx{width:100%;max-width:380px;padding:30px 26px}
+.login h1{font-size:21px;font-weight:800;letter-spacing:-.02em}
+.login .sub{font-size:13.5px;color:var(--ink2);margin-top:6px}
 
-  v_cod := lower(regexp_replace(coalesce(p_codigo,''), '[^a-zA-Z0-9]', '', 'g'));
-  if length(v_cod) < 3 then
-    raise exception 'O codigo precisa ter ao menos 3 letras ou numeros.';
-  end if;
+label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin:16px 0 6px}
+input,select{width:100%;background:var(--bg);border:1px solid var(--linha);border-radius:11px;
+  padding:12px 13px;font-family:"Manrope",sans-serif;font-size:16px;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--brand);outline-offset:0;border-color:transparent;background:var(--surface)}
 
-  if p_comissao_pct is null or p_comissao_pct < 0 or p_comissao_pct > 100 then
-    raise exception 'A comissao precisa ficar entre 0 e 100.';
-  end if;
+.cta{width:100%;background:var(--brand);color:#fff;border:0;border-radius:11px;padding:14px;cursor:pointer;
+  font-family:"Manrope",sans-serif;font-weight:700;font-size:15px;margin-top:20px}
+.cta:hover{background:var(--brand-dark)}
+.cta:disabled{opacity:.55;cursor:progress}
+.cta:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.erro{background:var(--alerta-tint);color:#A32E1E;border-radius:10px;padding:11px 13px;font-size:13.5px;margin-top:14px;line-height:1.45}
 
-  if exists (select 1 from vendedores
-              where lower(codigo) = v_cod and (p_id is null or id <> p_id)) then
-    raise exception 'Ja existe um vendedor com esse codigo.';
-  end if;
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:10;background:rgba(245,247,249,.9);
+  backdrop-filter:saturate(1.6) blur(12px);border-bottom:1px solid var(--linha);padding:13px 0}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.head .t{font-weight:800;font-size:16px;letter-spacing:-.01em}
+.head .t small{display:block;font-size:11.5px;font-weight:500;color:var(--ink2);letter-spacing:0}
+.acoeshead{display:flex;gap:8px;align-items:center}
+.iconbtn{background:var(--surface);border:1px solid var(--linha);border-radius:10px;width:36px;height:36px;
+  display:grid;place-items:center;cursor:pointer;color:var(--ink2)}
+.iconbtn:hover{color:var(--ink)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;
+  font-size:11.5px;font-weight:700;background:var(--tint);color:var(--brand-dark)}
+.badge.warn{background:var(--aviso-tint);color:var(--aviso)}
+.badge.off{background:var(--bg);color:var(--ink2)}
 
-  if p_user_id is not null and exists (
-       select 1 from vendedores
-        where user_id = p_user_id and (p_id is null or id <> p_id)) then
-    raise exception 'Essa conta ja esta vinculada a outro vendedor.';
-  end if;
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--linha);
+  border:1px solid var(--linha);border-radius:var(--r);overflow:hidden;margin-top:16px;box-shadow:var(--sh1)}
+.stat{background:var(--surface);padding:15px 16px}
+.stat .k{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.stat .v{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:20px;font-weight:500;letter-spacing:-.02em;margin-top:3px}
+.stat .v.verde{color:var(--brand-dark)}
+.stat .v.laranja{color:var(--aviso)}
 
-  if p_id is null then
-    insert into vendedores (nome, telefone, codigo, comissao_pct, ativo, user_id)
-    values (trim(p_nome), nullif(regexp_replace(coalesce(p_telefone,''),'\D','','g'),''),
-            v_cod, p_comissao_pct, coalesce(p_ativo,true), p_user_id)
-    returning id into v_id;
-  else
-    update vendedores
-       set nome = trim(p_nome),
-           telefone = nullif(regexp_replace(coalesce(p_telefone,''),'\D','','g'),''),
-           codigo = v_cod,
-           comissao_pct = p_comissao_pct,
-           ativo = coalesce(p_ativo,true),
-           -- so sobrescreve o vinculo quando um novo e informado
-           user_id = coalesce(p_user_id, user_id)
-     where id = p_id
-     returning id into v_id;
-    if v_id is null then raise exception 'Vendedor nao encontrado.'; end if;
-  end if;
+/* ---------- validação ---------- */
+.validacao{margin-top:16px;padding:22px 20px;text-align:center;position:relative;overflow:hidden}
+.validacao::after{content:"";position:absolute;inset:0 0 auto;height:120px;
+  background:radial-gradient(120% 80% at 50% 0,var(--tint) 0,transparent 70%)}
+.validacao.vazio::after{background:radial-gradient(120% 80% at 50% 0,var(--aviso-tint) 0,transparent 70%)}
+.validacao > *{position:relative;z-index:1}
+.validacao .k{font-size:12px;font-weight:600;color:var(--ink2)}
+.validacao .sorteado{font-family:"DM Mono",monospace;font-size:clamp(52px,17vw,72px);font-weight:500;
+  line-height:1;color:var(--brand-dark);margin:8px 0 12px;letter-spacing:.01em}
+.validacao.vazio .sorteado{color:var(--aviso)}
+.ganhador{background:var(--bg);border-radius:12px;padding:16px;text-align:left;margin-top:4px}
+.ganhador .nome{font-size:16px;font-weight:700}
+.ganhador .tel{font-family:"DM Mono",monospace;font-size:14px;color:var(--ink2);margin-top:2px}
+.ganhador .nums{font-family:"DM Mono",monospace;font-size:13px;color:var(--brand-dark);
+  background:var(--tint);border-radius:9px;padding:9px 11px;margin-top:11px;word-spacing:5px}
+.dupla{display:flex;gap:9px;margin-top:14px}
+.dupla > *{flex:1;margin-top:0}
+.btn2{background:var(--bg);color:var(--ink);border:1px solid var(--linha);border-radius:11px;padding:13px;
+  cursor:pointer;font-family:"Manrope",sans-serif;font-weight:600;font-size:14px;text-align:center;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+.btn2:hover{background:var(--surface)}
 
-  return json_build_object('ok', true, 'id', v_id, 'codigo', v_cod);
-end $$;
+/* ---------- filtros ---------- */
+.secao{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.secao h2{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.linkbtn{background:none;border:0;color:var(--brand-dark);font-family:inherit;font-size:13px;
+  font-weight:600;cursor:pointer;text-decoration:underline}
 
-revoke all on function vendedor_salvar_interno(bigint, text, text, text, numeric, boolean, uuid)
-  from anon, authenticated, public;
+.abas{display:flex;gap:7px;margin-top:13px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.abas::-webkit-scrollbar{display:none}
+.aba{flex:0 0 auto;background:var(--surface);border:1px solid var(--linha);border-radius:999px;
+  padding:8px 14px;cursor:pointer;color:var(--ink2);
+  font-family:"Manrope",sans-serif;font-size:13px;font-weight:600}
+.aba[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.busca{margin-top:10px;position:relative}
+.busca input{padding-left:38px;font-size:15px}
+.busca svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink3);pointer-events:none}
 
--- ------------------------------------------------------------
--- A versao do painel agora so confere a permissao e delega.
--- Continua funcionando para quem preferir colar o UUID na mao.
--- ------------------------------------------------------------
-create or replace function admin_vendedor_salvar(
-  p_id           bigint default null,
-  p_nome         text default null,
-  p_telefone     text default null,
-  p_codigo       text default null,
-  p_comissao_pct numeric default null,
-  p_ativo        boolean default true,
-  p_user_id      uuid default null
-) returns json
-language plpgsql security definer set search_path = public as $$
-begin
-  if not is_admin() then raise exception 'Acesso restrito.'; end if;
-  return vendedor_salvar_interno(p_id, p_nome, p_telefone, p_codigo,
-                                 p_comissao_pct, p_ativo, p_user_id);
-end $$;
+/* ---------- lista ---------- */
+.lista{margin-top:12px;display:flex;flex-direction:column;gap:9px}
+.venda{padding:15px 16px}
+.venda .topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.venda .nome{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.venda .meta{font-family:"DM Mono",monospace;font-size:12.5px;color:var(--ink2);margin-top:2px}
+.venda .valor{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:17px;font-weight:500;white-space:nowrap}
+.venda .nums{font-family:"DM Mono",monospace;font-size:12.5px;color:var(--brand-dark);
+  background:var(--tint);border-radius:9px;padding:8px 10px;margin-top:11px;word-spacing:5px;
+  line-height:1.7;word-break:break-all}
+.venda .rodape{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}
+.tempo{font-family:"DM Mono",monospace;font-size:12.5px;font-weight:500;color:var(--aviso)}
+.tempo.zerado{color:var(--alerta)}
+.tempo.ok{color:var(--brand-dark)}
+.botoes{display:flex;gap:7px;flex-wrap:wrap}
+.mini{border:1px solid var(--linha);background:var(--surface);border-radius:9px;padding:8px 12px;cursor:pointer;
+  font-family:"Manrope",sans-serif;font-size:13px;font-weight:600;color:var(--ink2)}
+.mini:hover{color:var(--ink)}
+.mini.ok{background:var(--brand);border-color:var(--brand);color:#fff}
+.mini.ok:hover{background:var(--brand-dark);color:#fff}
+.mini.perigo{color:var(--alerta)}
+.mini:disabled{opacity:.5;cursor:progress}
 
-grant execute on function admin_vendedor_salvar(bigint, text, text, text, numeric, boolean, uuid) to authenticated;
+.vazio{padding:34px 20px;text-align:center;color:var(--ink2)}
+.vazio svg{color:var(--ink3);margin-bottom:9px}
+.vazio p{font-size:13.5px;margin-top:5px}
 
--- ------------------------------------------------------------
--- Listagem passa a mostrar o e-mail de acesso
--- ------------------------------------------------------------
-create or replace function admin_vendedores() returns json
-language plpgsql security definer set search_path = public as $$
-declare v_out json;
-begin
-  if not is_admin() then raise exception 'Acesso restrito.'; end if;
+/* ---------- histórico ---------- */
+.hist{margin-top:12px;overflow:hidden}
+.hlinha{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+  padding:13px 16px;border-bottom:1px solid var(--linha)}
+.hlinha:last-child{border-bottom:0}
+.hnum{font-family:"DM Mono",monospace;font-size:15px;font-weight:500;color:var(--ink)}
+.hinfo{font-size:12.5px;color:var(--ink2)}
+.hinfo b{color:var(--ink);font-weight:600}
+.hres{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;
+  background:var(--tint);color:var(--brand-dark)}
+.hres.acu{background:var(--aviso-tint);color:var(--aviso)}
 
-  select coalesce(json_agg(x order by x.nome), '[]'::json) into v_out
-  from (
-    select ve.id, ve.nome, ve.telefone, ve.codigo, ve.comissao_pct,
-           ve.ativo, ve.user_id, ve.criado_em,
-           (select u.email from auth.users u where u.id = ve.user_id) as email,
-           coalesce((select count(*) from vendas v
-                      where v.vendedor_id = ve.id and v.status = 'pago'), 0) as vendas_pagas,
-           coalesce((select sum(v.valor_centavos) from vendas v
-                      where v.vendedor_id = ve.id and v.status = 'pago'), 0) as total_vendido,
-           coalesce((select sum(v.comissao_centavos) from vendas v
-                      where v.vendedor_id = ve.id and v.status = 'pago'), 0) as total_comissao
-      from vendedores ve
-  ) x;
+/* ---------- navegação ---------- */
+.nav{display:flex;gap:6px;margin-top:14px;background:var(--surface);border:1px solid var(--linha);
+  border-radius:12px;padding:4px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{flex:1;min-width:88px;background:none;border:0;border-radius:9px;padding:9px 10px;cursor:pointer;
+  color:var(--ink2);font-family:"Manrope",sans-serif;font-size:13.5px;font-weight:600;white-space:nowrap}
+.nav button[aria-selected="true"]{background:var(--ink);color:#fff}
 
-  return v_out;
-end $$;
+/* ---------- vendedores ---------- */
+.vend{padding:15px 16px}
+.vend .topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.vend .nome{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.vend .cod{font-family:"DM Mono",monospace;font-size:12.5px;color:var(--brand-dark);
+  background:var(--tint);border-radius:7px;padding:2px 7px;display:inline-block;margin-top:5px}
+.vend .pct{font-family:"DM Mono",monospace;font-size:19px;font-weight:500;white-space:nowrap}
+.vend .pct small{font-size:12px;color:var(--ink2)}
+.vend .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--linha);
+  border:1px solid var(--linha);border-radius:10px;overflow:hidden;margin-top:12px}
+.vend .cel{background:var(--surface);padding:9px 10px;text-align:center}
+.vend .cel .k{font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em}
+.vend .cel .v{font-family:"DM Mono",monospace;font-size:14px;font-weight:500;margin-top:2px}
+.vend .rodape{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.inativo{opacity:.6}
+.tagoff{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;
+  background:var(--bg);color:var(--ink2);margin-left:7px}
+
+/* ---------- ajustes ---------- */
+.campo{padding:15px 16px;border-bottom:1px solid var(--linha)}
+.campo:last-child{border-bottom:0}
+.campo .cab{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.campo .rot{font-size:14px;font-weight:600}
+.campo .dica{font-size:12px;color:var(--ink2);margin-top:3px;line-height:1.45}
+.campo input,.campo select{margin-top:9px;font-family:"DM Mono",monospace;font-size:15px}
+.campo select{appearance:none;background-image:none}
+.alertabox{display:flex;gap:10px;padding:14px 16px;background:var(--aviso-tint);border-radius:12px;
+  margin-top:14px;font-size:13px;color:#7A4A00;line-height:1.5}
+.alertabox svg{color:var(--aviso);flex-shrink:0;margin-top:1px}
+
+/* ---------- análises ---------- */
+.periodo{display:flex;gap:7px;margin-top:14px}
+.periodo button{flex:1;background:var(--surface);border:1px solid var(--linha);border-radius:10px;
+  padding:9px;cursor:pointer;color:var(--ink2);font-family:"Manrope",sans-serif;font-size:13px;font-weight:600}
+.periodo button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.bloco{margin-top:14px;padding:17px 18px}
+.bloco h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.bloco .leg{font-size:12px;color:var(--ink2);line-height:1.45}
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;
+  border-bottom:1px solid var(--linha)}
+.kv:last-child{border-bottom:0}
+.kv .k{font-size:13.5px;color:var(--ink2)}
+.kv .v{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;font-size:16px;font-weight:500}
+.kv .v.verde{color:var(--brand-dark)}
+.kv .v.vermelho{color:var(--alerta)}
+.horas{display:flex;align-items:flex-end;gap:3px;height:96px;margin-top:14px}
+.horas .h{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.horas .b{width:100%;background:var(--brand);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
+.horas .l{font-family:"DM Mono",monospace;font-size:8.5px;color:var(--ink3)}
+.rank{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--linha)}
+.rank:last-child{border-bottom:0}
+.rpos{font-family:"DM Mono",monospace;font-size:13px;color:var(--ink3);width:18px}
+.rnome{font-size:14px;font-weight:600}
+.rsub{font-size:12px;color:var(--ink2);margin-top:1px}
+.rval{font-family:"DM Mono",monospace;font-size:14px;font-weight:500;text-align:right;white-space:nowrap}
+.rval small{display:block;font-size:11px;color:var(--brand-dark);font-weight:400}
+
+/* ---------- bottom sheet ---------- */
+.fundo{position:fixed;inset:0;z-index:40;background:rgba(13,27,42,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.fundo.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+  border-radius:20px 20px 0 0;box-shadow:var(--sh2);
+  padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow-y:auto;transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.fundo.on .sheet{transform:none}
+.sheet .pega{width:38px;height:4px;background:var(--linha);border-radius:999px;margin:0 auto 18px}
+.sheet h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sheet .desc{font-size:13.5px;color:var(--ink2);margin-top:6px;line-height:1.55}
+.sheet .par{display:flex;gap:11px}
+.sheet .par > div{flex:1}
+.avancado{margin-top:16px;border-top:1px solid var(--linha);padding-top:14px}
+.avancado summary{font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;list-style:none}
+.avancado summary::-webkit-details-marker{display:none}
+.avancado summary::before{content:"+ ";font-family:"DM Mono",monospace}
+.avancado[open] summary::before{content:"− "}
+.avancado input{margin-top:11px}
+
+.acoes{display:flex;gap:9px;margin-top:22px}
+.acoes .cta{flex:1;margin-top:0;padding:15px}
+.acoes .btn2{flex:0 0 auto;padding:15px 20px}
+
+.toast{position:fixed;left:16px;right:16px;bottom:20px;z-index:50;max-width:520px;margin:0 auto;
+  background:var(--ink);color:#fff;border-radius:12px;padding:13px 16px;font-size:14px;font-weight:600;
+  box-shadow:var(--sh2);transform:translateY(140%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.toast.on{transform:none}
+.toast.ruim{background:#A32E1E}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ---------------- login ---------------- -->
+<div class="login" id="telaLogin">
+  <div class="cartao cx">
+    <h1>Painel do organizador</h1>
+    <p class="sub">Acesso restrito. Entre com a conta cadastrada.</p>
+    <label for="email">E-mail</label>
+    <input id="email" type="email" autocomplete="username" inputmode="email">
+    <label for="senha">Senha</label>
+    <input id="senha" type="password" autocomplete="current-password">
+    <div id="loginErro"></div>
+    <button class="cta" id="btnEntrar">Entrar</button>
+  </div>
+</div>
+
+<!-- ---------------- painel ---------------- -->
+<div id="telaPainel" class="oculto">
+  <header>
+    <div class="wrap head">
+      <div class="t">Painel<small id="hCiclo">carregando…</small></div>
+      <div class="acoeshead">
+        <span class="badge off" id="hStatus">—</span>
+        <button class="iconbtn" id="btnAtualizar" title="Atualizar" aria-label="Atualizar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>
+        </button>
+        <button class="iconbtn" id="btnSair" title="Sair" aria-label="Sair">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav class="nav" id="nav" role="tablist"></nav>
+
+    <section id="vVendas">
+    <div class="stats">
+      <div class="stat"><p class="k">Recebido</p><p class="v verde" id="sRecebido">—</p></div>
+      <div class="stat"><p class="k">A receber</p><p class="v laranja" id="sReceber">—</p></div>
+      <div class="stat"><p class="k">Números pagos</p><p class="v" id="sPagos">—</p></div>
+      <div class="stat"><p class="k">Prêmio do ciclo</p><p class="v" id="sPremio">—</p></div>
+    </div>
+
+    <div class="cartao validacao oculto" id="blocoValidacao"></div>
+
+    <div class="secao">
+      <h2>Vendas</h2>
+      <button class="linkbtn" id="btnCsv">Baixar CSV</button>
+    </div>
+
+    <div class="abas" role="tablist" id="abas"></div>
+    <div class="busca">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="busca" placeholder="Buscar por nome ou telefone" autocomplete="off">
+    </div>
+
+    <div class="lista" id="lista"></div>
+
+    <div class="secao"><h2>Ciclos anteriores</h2></div>
+    <div class="cartao hist" id="hist"></div>
+    </section>
+
+    <!-- ---------------- vendedores ---------------- -->
+    <section id="vVendedores" class="oculto">
+      <div class="secao">
+        <h2>Vendedores</h2>
+        <button class="linkbtn" id="btnNovoVendedor">Cadastrar</button>
+      </div>
+      <div class="lista" id="listaVendedores"></div>
+    </section>
+
+    <!-- ---------------- análises ---------------- -->
+    <section id="vAnalises" class="oculto">
+      <div class="periodo" id="periodo"></div>
+      <div id="analises"></div>
+    </section>
+
+    <!-- ---------------- ajustes ---------------- -->
+    <section id="vAjustes" class="oculto">
+      <div class="secao"><h2>Prêmio do ciclo</h2></div>
+      <div class="cartao" id="blocoPremio"></div>
+
+      <div class="secao"><h2>Parâmetros</h2></div>
+      <div class="cartao" id="blocoConfig"></div>
+      <button class="cta" id="btnSalvarConfig" style="margin-top:16px">Salvar parâmetros</button>
+
+      <div class="alertabox">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16.5v.01"/></svg>
+        <span>Mudar o preço do bilhete vale para as próximas reservas, não para as já feitas. Mudar o prêmio depois que as vendas começaram é permitido, mas quem já comprou apostou no valor anterior.</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="fundo" id="fundo"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+// Credenciais ficam em config.js, na raiz do repositorio.
+const { SUPABASE_URL, SUPABASE_ANON } = window.RIFA_CONFIG || {};
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $  = id => document.getElementById(id);
+
+const app = { resumo:null, vendas:[], filtro:"reservado", busca:"", poll:null, relogio:null };
+
+const brl = c => (Number(c)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const pad = n => String(n).padStart(3,"0");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const tel = t => { const d=String(t||"").replace(/\D/g,"");
+  return d.length===11 ? d.replace(/(\d{2})(\d{5})(\d{4})/,"($1) $2-$3")
+       : d.length===10 ? d.replace(/(\d{2})(\d{4})(\d{4})/,"($1) $2-$3") : d; };
+
+let toastTimer;
+function toast(msg, ruim){
+  const t = $("toast");
+  t.textContent = msg; t.classList.toggle("ruim", !!ruim); t.classList.add("on");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), 3400);
+}
+
+// ---------------- sessão ----------------
+async function verificarSessao(){
+  const { data } = await sb.auth.getSession();
+  if(data.session){ entrarNoPainel(); } else { $("telaLogin").classList.remove("oculto"); }
+}
+
+$("btnEntrar").addEventListener("click", async () => {
+  const b = $("btnEntrar"), box = $("loginErro");
+  box.innerHTML = ""; b.disabled = true; b.textContent = "Entrando…";
+  const { error } = await sb.auth.signInWithPassword({
+    email: $("email").value.trim(), password: $("senha").value });
+  b.disabled = false; b.textContent = "Entrar";
+  if(error){ box.innerHTML = '<p class="erro">E-mail ou senha incorretos.</p>'; return; }
+  entrarNoPainel();
+});
+
+$("senha").addEventListener("keydown", e => { if(e.key === "Enter") $("btnEntrar").click(); });
+
+$("btnSair").addEventListener("click", async () => {
+  clearInterval(app.poll); clearInterval(app.relogio);
+  await sb.auth.signOut();
+  location.reload();
+});
+
+function entrarNoPainel(){
+  $("telaLogin").classList.add("oculto");
+  $("telaPainel").classList.remove("oculto");
+  montarNav();
+  montarAbas();
+  carregar();
+  app.poll = setInterval(carregar, 20000);
+  app.relogio = setInterval(atualizarTempos, 1000);
+}
+
+// ---------------- carga ----------------
+$("btnAtualizar").addEventListener("click", () => carregar(true));
+
+async function carregar(manual){
+  try{
+    const { data: resumo, error } = await sb.rpc("admin_resumo", { p_ciclo_id: null });
+    if(error) throw error;
+    if(!resumo || !resumo.ciclo){ toast("Nenhum ciclo cadastrado ainda."); return; }
+    app.resumo = resumo;
+    pintarCabecalho(resumo);
+    pintarValidacao(resumo);
+
+    const { data: vendas, error: e2 } = await sb.rpc("admin_vendas",
+      { p_ciclo_id: resumo.ciclo.id, p_status: app.filtro || null, p_busca: app.busca || null });
+    if(e2) throw e2;
+    app.vendas = vendas || [];
+    pintarLista();
+    montarAbas();
+    if(manual) toast("Atualizado.");
+  }catch(e){
+    const m = (e && e.message) || "";
+    if(m.includes("Acesso restrito")){
+      toast("Sua conta não tem permissão de organizador.", true);
+      clearInterval(app.poll);
+    }else{
+      toast("Falha ao carregar. Verifique a conexão.", true);
+    }
+  }
+}
+
+const ROTULOS = {
+  agendado:["Agendado","off"], aberto:["Vendas abertas","badge"],
+  fechado:["Aguardando sorteio","warn"], sorteado:["Validar e pagar","warn"],
+  pago:["Prêmio pago","badge"], encerrado:["Encerrado","off"]
+};
+
+function pintarCabecalho(r){
+  const c = r.ciclo;
+  $("hCiclo").textContent = "Ciclo " + c.numero_ciclo;
+  const [txt, cls] = ROTULOS[c.status] || [c.status,"off"];
+  $("hStatus").textContent = txt;
+  $("hStatus").className = "badge " + (cls === "badge" ? "" : cls);
+
+  $("sRecebido").textContent = brl(r.arrecadado);
+  $("sReceber").textContent  = brl(r.a_receber);
+  $("sPagos").textContent    = r.pagos + " / 1000";
+  $("sPremio").textContent   = brl(c.premio_centavos);
+}
+
+// ---------------- validação do sorteio ----------------
+function pintarValidacao(r){
+  const bloco = $("blocoValidacao"), c = r.ciclo;
+  if(c.numero_sorteado === null || c.numero_sorteado === undefined){
+    bloco.classList.add("oculto"); return;
+  }
+  bloco.classList.remove("oculto");
+
+  if(r.ganhador){
+    const g = r.ganhador;
+    const nums = (g.numeros||[]).map(pad).join(" ");
+    const zap = String(g.telefone||"").replace(/\D/g,"");
+    const jaPago = c.status === "pago";
+    bloco.classList.remove("vazio");
+    bloco.innerHTML =
+      '<p class="k">Número sorteado</p>' +
+      '<p class="sorteado">' + pad(c.numero_sorteado) + '</p>' +
+      '<div class="ganhador">' +
+        '<p class="nome">' + esc(g.nome) + '</p>' +
+        '<p class="tel">' + esc(tel(g.telefone)) + '</p>' +
+        '<p class="nums">' + nums + '</p>' +
+        '<div class="dupla">' +
+          '<a class="btn2" target="_blank" rel="noopener" href="https://wa.me/55' + zap + '?text=' +
+            encodeURIComponent("Parabéns! O número " + pad(c.numero_sorteado) + " foi sorteado e você ganhou " + brl(c.premio_centavos) + ".") + '">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+            'Avisar' +
+          '</a>' +
+          (jaPago
+            ? '<span class="btn2" style="color:var(--brand-dark);background:var(--tint);border-color:transparent">Prêmio pago</span>'
+            : '<button class="cta" style="margin-top:0" id="btnPremio">Registrar pagamento</button>') +
+        '</div>' +
+      '</div>';
+    const bp = $("btnPremio");
+    if(bp) bp.addEventListener("click", registrarPremio);
+  }else{
+    bloco.classList.add("vazio");
+    bloco.innerHTML =
+      '<p class="k">Número sorteado</p>' +
+      '<p class="sorteado">' + pad(c.numero_sorteado) + '</p>' +
+      '<p style="font-size:14px;color:var(--ink2);line-height:1.55">Esse número não foi vendido. ' +
+      'O prêmio acumula e entra no próximo ciclo, que abre às 19h.</p>';
+  }
+}
+
+async function registrarPremio(){
+  const b = $("btnPremio");
+  b.disabled = true; b.textContent = "Registrando…";
+  const { error } = await sb.rpc("marcar_premio_pago", { p_ciclo_id: app.resumo.ciclo.id });
+  if(error){ toast(error.message, true); b.disabled = false; b.textContent = "Registrar pagamento"; return; }
+  toast("Pagamento do prêmio registrado.");
+  carregar();
+}
+
+// ---------------- filtros ----------------
+const FILTROS = [["reservado","Aguardando"],["pago","Pagos"],["",  "Todas"]];
+
+function montarAbas(){
+  const el = $("abas"); el.innerHTML = "";
+  FILTROS.forEach(([v, nome]) => {
+    const b = document.createElement("button");
+    b.className = "aba"; b.setAttribute("role","tab");
+    b.setAttribute("aria-selected", app.filtro === v ? "true" : "false");
+    b.textContent = nome;
+    b.addEventListener("click", () => { app.filtro = v; montarAbas(); carregar(); });
+    el.appendChild(b);
+  });
+}
+
+let buscaTimer;
+$("busca").addEventListener("input", e => {
+  clearTimeout(buscaTimer);
+  buscaTimer = setTimeout(() => { app.busca = e.target.value.trim(); carregar(); }, 400);
+});
+
+// ---------------- lista ----------------
+function pintarLista(){
+  const el = $("lista");
+  if(!app.vendas.length){
+    el.innerHTML =
+      '<div class="cartao vazio">' +
+      '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h9"/></svg>' +
+      '<p>Nenhuma venda com esse filtro.</p></div>';
+    return;
+  }
+
+  el.innerHTML = app.vendas.map(v => {
+    const nums = (v.numeros||[]).map(pad).join(" ");
+    const pend = v.status === "reservado";
+    return '<div class="cartao venda" data-id="' + v.id + '">' +
+      '<div class="topo">' +
+        '<div><p class="nome">' + esc(v.comprador_nome) + '</p>' +
+        '<p class="meta">' + esc(tel(v.comprador_telefone)) + ' · nº ' + v.id +
+          (v.vendedor_nome ? ' · ' + esc(v.vendedor_nome) : '') + '</p></div>' +
+        '<p class="valor">' + brl(v.valor_centavos) + '</p>' +
+      '</div>' +
+      '<p class="nums">' + nums + '</p>' +
+      '<div class="rodape">' +
+        '<span class="tempo" data-exp="' + (v.reserva_expira_em || "") + '" data-st="' + v.status + '"></span>' +
+        '<div class="botoes">' +
+          (pend
+            ? '<button class="mini ok" data-a="confirmar">Confirmar pago</button>' +
+              '<button class="mini" data-a="estender">+15 min</button>' +
+              '<button class="mini perigo" data-a="cancelar">Cancelar</button>'
+            : v.status === "pago"
+              ? '<button class="mini perigo" data-a="cancelar">Estornar</button>'
+              : '') +
+        '</div>' +
+      '</div></div>';
+  }).join("");
+
+  atualizarTempos();
+}
+
+function atualizarTempos(){
+  document.querySelectorAll(".tempo").forEach(el => {
+    const st = el.dataset.st;
+    if(st === "pago"){ el.textContent = "Pagamento confirmado"; el.className = "tempo ok"; return; }
+    if(st === "expirado"){ el.textContent = "Reserva expirada"; el.className = "tempo zerado"; return; }
+    if(st === "cancelado"){ el.textContent = "Cancelada"; el.className = "tempo zerado"; return; }
+
+    const exp = el.dataset.exp;
+    if(!exp){ el.textContent = ""; return; }
+    const r = new Date(exp).getTime() - Date.now();
+    if(r <= 0){ el.textContent = "Expirando…"; el.className = "tempo zerado"; return; }
+    const m = Math.floor(r/60000), s = Math.floor(r/1000)%60;
+    el.textContent = "Expira em " + m + ":" + String(s).padStart(2,"0");
+    el.className = "tempo" + (r < 120000 ? " zerado" : "");
+  });
+}
+
+$("lista").addEventListener("click", async e => {
+  const b = e.target.closest(".mini");
+  if(!b) return;
+  const id = Number(b.closest(".venda").dataset.id);
+  const acao = b.dataset.a;
+
+  if(acao === "cancelar" &&
+     !confirm("Cancelar a venda nº " + id + "? Os números voltam para a grade.")) return;
+
+  const rotulo = b.textContent;
+  b.disabled = true; b.textContent = "…";
+
+  const chamada =
+    acao === "confirmar" ? sb.rpc("confirmar_pagamento", { p_venda_id:id })
+  : acao === "estender"  ? sb.rpc("estender_reserva",    { p_venda_id:id, p_minutos:15 })
+  :                        sb.rpc("cancelar_venda",      { p_venda_id:id });
+
+  const { error } = await chamada;
+  b.disabled = false; b.textContent = rotulo;
+
+  if(error){ toast(error.message, true); return; }
+  toast(acao === "confirmar" ? "Pagamento confirmado."
+      : acao === "estender"  ? "Reserva estendida em 15 minutos."
+      :                        "Venda cancelada. Números liberados.");
+  carregar();
+});
+
+// ---------------- CSV ----------------
+$("btnCsv").addEventListener("click", () => {
+  if(!app.vendas.length){ toast("Nada para exportar com esse filtro."); return; }
+  const cab = ["reserva","nome","telefone","numeros","quantidade","valor",
+               "vendedor","codigo","comissao_pct","comissao","status","criado_em","pago_em"];
+  const dec = c => (Number(c||0)/100).toFixed(2).replace(".", ",");
+  const linhas = app.vendas.map(v => [
+    v.id, v.comprador_nome, v.comprador_telefone,
+    (v.numeros||[]).map(pad).join(" "), v.quantidade, dec(v.valor_centavos),
+    v.vendedor_nome || "", v.vendedor_codigo || "",
+    v.comissao_pct == null ? "" : String(v.comissao_pct).replace(".", ","),
+    v.comissao_centavos == null ? "" : dec(v.comissao_centavos),
+    v.status, v.criado_em || "", v.pago_em || ""
+  ]);
+  const csv = [cab, ...linhas]
+    .map(l => l.map(c => '"' + String(c ?? "").replace(/"/g,'""') + '"').join(";"))
+    .join("\r\n");
+
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type:"text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "vendas_ciclo_" + app.resumo.ciclo.numero_ciclo + ".csv";
+  a.click(); URL.revokeObjectURL(url);
+});
+
+// ---------------- histórico ----------------
+async function carregarHistorico(){
+  const { data, error } = await sb.rpc("admin_historico", { p_limite: 15 });
+  if(error || !data || !data.length){
+    $("hist").innerHTML = '<div class="vazio"><p>Nenhum ciclo sorteado ainda.</p></div>';
+    return;
+  }
+  $("hist").innerHTML = data.map(c =>
+    '<div class="hlinha">' +
+      '<span class="hnum">' + pad(c.numero_sorteado) + '</span>' +
+      '<span class="hinfo">Ciclo ' + c.numero_ciclo + ' · <b>' + c.vendidos + '</b> vendidos · ' +
+        brl(c.arrecadado) + ' arrecadado</span>' +
+      '<span class="hres' + (c.teve_ganhador ? '' : ' acu') + '">' +
+        (c.teve_ganhador ? 'pago ' + brl(c.premio_centavos) : 'acumulou') + '</span>' +
+    '</div>').join("");
+}
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+const VIEWS = [
+  ["vendas",     "Vendas",     "vVendas"],
+  ["vendedores", "Vendedores", "vVendedores"],
+  ["analises",   "Análises",   "vAnalises"],
+  ["ajustes",    "Ajustes",    "vAjustes"]
+];
+let viewAtual = "vendas";
+
+function montarNav(){
+  const el = $("nav"); el.innerHTML = "";
+  VIEWS.forEach(([id, nome]) => {
+    const b = document.createElement("button");
+    b.setAttribute("role","tab");
+    b.setAttribute("aria-selected", viewAtual === id ? "true" : "false");
+    b.textContent = nome;
+    b.addEventListener("click", () => trocarView(id));
+    el.appendChild(b);
+  });
+}
+
+function trocarView(id){
+  viewAtual = id;
+  VIEWS.forEach(([v, , sec]) => $(sec).classList.toggle("oculto", v !== id));
+  montarNav();
+  window.scrollTo({ top:0, behavior:"instant" });
+  if(id === "vendedores") carregarVendedores();
+  if(id === "analises")   carregarAnalises();
+  if(id === "ajustes")    carregarAjustes();
+}
+
+// ---------------- bottom sheet ----------------
+function abrirSheet(html){ $("sheet").innerHTML = '<div class="pega"></div>' + html; $("fundo").classList.add("on"); }
+function fecharSheet(){ $("fundo").classList.remove("on"); }
+$("fundo").addEventListener("click", e => { if(e.target === $("fundo")) fecharSheet(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") fecharSheet(); });
+
+// ============================================================
+// VENDEDORES
+// ============================================================
+let vendedores = [];
+
+async function carregarVendedores(){
+  const { data, error } = await sb.rpc("admin_vendedores");
+  if(error){ toast(error.message, true); return; }
+  vendedores = data || [];
+  pintarVendedores();
+}
+
+function linkDoVendedor(codigo){
+  return location.origin + location.pathname.replace(/admin\.html$/, "") +
+         "index.html?v=" + encodeURIComponent(codigo);
+}
+
+function pintarVendedores(){
+  const el = $("listaVendedores");
+  if(!vendedores.length){
+    el.innerHTML = '<div class="cartao vazio">' +
+      '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>' +
+      '<p>Nenhum vendedor cadastrado ainda.</p></div>';
+    return;
+  }
+
+  el.innerHTML = vendedores.map(v =>
+    '<div class="cartao vend' + (v.ativo ? '' : ' inativo') + '" data-id="' + v.id + '">' +
+      '<div class="topo">' +
+        '<div><p class="nome">' + esc(v.nome) +
+          (v.ativo ? '' : '<span class="tagoff">inativo</span>') + '</p>' +
+          '<span class="cod">' + esc(v.codigo) + '</span>' +
+          (v.email ? '<p class="rsub" style="margin-top:5px">' + esc(v.email) + '</p>'
+                   : '<span class="tagoff">sem login</span>') +
+        '</div>' +
+        '<p class="pct">' + Number(v.comissao_pct) + '<small>%</small></p>' +
+      '</div>' +
+      '<div class="grid">' +
+        '<div class="cel"><p class="k">Vendas</p><p class="v">' + v.vendas_pagas + '</p></div>' +
+        '<div class="cel"><p class="k">Vendido</p><p class="v">' + brl(v.total_vendido) + '</p></div>' +
+        '<div class="cel"><p class="k">Comissão</p><p class="v">' + brl(v.total_comissao) + '</p></div>' +
+      '</div>' +
+      '<div class="rodape">' +
+        '<button class="mini" data-a="editar">Editar</button>' +
+        '<button class="mini" data-a="link">Copiar link</button>' +
+      '</div>' +
+    '</div>').join("");
+}
+
+$("listaVendedores").addEventListener("click", async e => {
+  const b = e.target.closest(".mini");
+  if(!b) return;
+  const id = Number(b.closest(".vend").dataset.id);
+  const v  = vendedores.find(x => x.id === id);
+  if(!v) return;
+
+  if(b.dataset.a === "link"){
+    try{ await navigator.clipboard.writeText(linkDoVendedor(v.codigo)); toast("Link copiado."); }
+    catch(err){ toast(linkDoVendedor(v.codigo)); }
+    return;
+  }
+  formVendedor(v);
+});
+
+$("btnNovoVendedor").addEventListener("click", () => formVendedor(null));
+
+function formVendedor(v){
+  const novo = !v;
+  abrirSheet(
+    '<h2>' + (novo ? "Novo vendedor" : "Editar vendedor") + '</h2>' +
+    '<p class="desc">O código vira o link de divulgação. Use algo curto e fácil de ditar.</p>' +
+    '<label for="fNome">Nome</label><input id="fNome" value="' + esc(v ? v.nome : "") + '">' +
+    '<div class="par">' +
+      '<div><label for="fCodigo">Código</label>' +
+        '<input id="fCodigo" placeholder="ex. joao" value="' + esc(v ? v.codigo : "") + '"></div>' +
+      '<div><label for="fPct">Comissão %</label>' +
+        '<input id="fPct" inputmode="decimal" value="' + (v ? Number(v.comissao_pct) : 10) + '"></div>' +
+    '</div>' +
+    '<label for="fTel">WhatsApp <span style="font-weight:400;color:var(--ink3)">— opcional</span></label>' +
+    '<input id="fTel" inputmode="tel" value="' + esc(v && v.telefone ? v.telefone : "") + '">' +
+    '<label for="fEmail">E-mail de acesso <span style="font-weight:400;color:var(--ink3)">— opcional</span></label>' +
+    '<input id="fEmail" type="email" inputmode="email" autocomplete="off" placeholder="vendedor@email.com" value="' + esc(v && v.email ? v.email : "") + '">' +
+    '<label for="fSenha">Senha' + (v && v.email ? ' <span style="font-weight:400;color:var(--ink3)">— deixe vazio para manter</span>' : '') + '</label>' +
+    '<input id="fSenha" type="text" autocomplete="off" placeholder="mínimo 6 caracteres">' +
+    '<p class="desc" style="margin-top:7px">Preenchendo os dois, a conta é criada na hora e o vendedor já entra em vendedor.html. Sem eles, ele recebe comissão mas não acessa o painel.</p>' +
+    '<details class="avancado"><summary>Vincular por UUID</summary>' +
+      '<input id="fUser" placeholder="cole de Authentication → Users" value="' + esc(v && v.user_id ? v.user_id : "") + '" style="font-family:\'DM Mono\',monospace;font-size:13px">' +
+      '<p class="desc" style="margin-top:7px">Use se a conta já existe e você prefere colar o identificador.</p>' +
+    '</details>' +
+    '<label for="fAtivo">Situação</label>' +
+    '<select id="fAtivo" style="width:100%;background:var(--bg);border:1px solid var(--linha);border-radius:11px;padding:12px 13px;font-family:Manrope,sans-serif;font-size:16px;color:var(--ink)">' +
+      '<option value="1"' + (!v || v.ativo ? " selected" : "") + '>Ativo</option>' +
+      '<option value="0"' + (v && !v.ativo ? " selected" : "") + '>Inativo</option>' +
+    '</select>' +
+    '<div id="fErro"></div>' +
+    '<div class="acoes"><button class="btn2" id="fVoltar">Cancelar</button>' +
+    '<button class="cta" id="fSalvar">Salvar</button></div>'
+  );
+  $("fVoltar").addEventListener("click", fecharSheet);
+  $("fSalvar").addEventListener("click", () => salvarVendedor(v ? v.id : null));
+}
+
+async function salvarVendedor(id){
+  const b = $("fSalvar"), box = $("fErro");
+  const uuid  = $("fUser").value.trim();
+  const email = $("fEmail").value.trim();
+  const senha = $("fSenha").value;
+  box.innerHTML = "";
+
+  if(uuid && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)){
+    box.innerHTML = '<p class="erro">O UUID não parece válido. Copie exatamente como aparece em Authentication → Users.</p>';
+    return;
+  }
+
+  const corpo = {
+    id: id,
+    nome: $("fNome").value.trim(),
+    telefone: $("fTel").value.trim() || null,
+    codigo: $("fCodigo").value.trim(),
+    comissao_pct: Number(String($("fPct").value).replace(",", ".")),
+    ativo: $("fAtivo").value === "1",
+    user_id: uuid || null
+  };
+
+  b.disabled = true; b.textContent = "Salvando…";
+
+  let resultado, erro;
+
+  if(email){
+    // Com e-mail, passa pela Edge Function, que é quem pode criar a conta
+    try{
+      const { data: s } = await sb.auth.getSession();
+      const r = await fetch(SUPABASE_URL + "/functions/v1/vendedores", {
+        method: "POST",
+        headers: { "Content-Type":"application/json",
+                   "Authorization": "Bearer " + s.session.access_token },
+        body: JSON.stringify({ ...corpo, email, senha })
+      });
+      if(r.status === 404){
+        erro = "A função vendedores ainda não foi publicada. Rode: supabase functions deploy vendedores";
+      }else{
+        const j = await r.json();
+        if(!r.ok) erro = j.erro || "Não foi possível salvar.";
+        else resultado = j;
+      }
+    }catch(e){
+      erro = "Falha de conexão com o servidor.";
+    }
+  }else{
+    const { data, error } = await sb.rpc("admin_vendedor_salvar", {
+      p_id: corpo.id, p_nome: corpo.nome, p_telefone: corpo.telefone,
+      p_codigo: corpo.codigo, p_comissao_pct: corpo.comissao_pct,
+      p_ativo: corpo.ativo, p_user_id: corpo.user_id
+    });
+    if(error) erro = error.message; else resultado = data;
+  }
+
+  b.disabled = false; b.textContent = "Salvar";
+  if(erro){ box.innerHTML = '<p class="erro">' + esc(erro) + '</p>'; return; }
+
+  fecharSheet();
+  toast(resultado.criou_login   ? "Vendedor e acesso criados. Código: " + resultado.codigo
+      : resultado.senha_trocada ? "Vendedor salvo e senha atualizada."
+      :                           "Vendedor salvo. Código: " + resultado.codigo);
+  carregarVendedores();
+}
+
+// ============================================================
+// ANÁLISES
+// ============================================================
+const PERIODOS = [[7,"7 ciclos"],[30,"30 ciclos"],[90,"90 ciclos"]];
+let periodoAtual = 30;
+
+function montarPeriodo(){
+  const el = $("periodo"); el.innerHTML = "";
+  PERIODOS.forEach(([n, nome]) => {
+    const b = document.createElement("button");
+    b.setAttribute("aria-selected", periodoAtual === n ? "true" : "false");
+    b.textContent = nome;
+    b.addEventListener("click", () => { periodoAtual = n; montarPeriodo(); carregarAnalises(); });
+    el.appendChild(b);
+  });
+}
+
+async function carregarAnalises(){
+  montarPeriodo();
+  $("analises").innerHTML = '<div class="cartao vazio"><p>Carregando…</p></div>';
+
+  const { data, error } = await sb.rpc("admin_analytics", { p_ciclos: periodoAtual });
+  if(error){ toast(error.message, true); return; }
+  if(!data || data.vazio){
+    $("analises").innerHTML = '<div class="cartao vazio"><p>Ainda não há ciclos para analisar.</p></div>';
+    return;
+  }
+
+  const f = data.financeiro, c = data.ciclos, fu = data.funil;
+  const margem = Number(f.arrecadado) - Number(f.comissoes) - Number(c.premios_pagos);
+  const conv = Number(fu.criadas) ? Math.round(Number(fu.pagas)/Number(fu.criadas)*100) : 0;
+  const ticket = Number(f.vendas) ? (Number(f.bilhetes)/Number(f.vendas)) : 0;
+
+  let html = "";
+
+  // financeiro
+  html += '<div class="cartao bloco"><h3>Resultado do período</h3>' +
+    '<p class="leg">' + c.ciclos + ' ciclos · ' + c.com_ganhador + ' com ganhador · ' +
+      c.acumulados + ' acumulados</p>' +
+    kv("Arrecadado", brl(f.arrecadado), "verde") +
+    kv("Comissões", "− " + brl(f.comissoes)) +
+    kv("Prêmios pagos", "− " + brl(c.premios_pagos)) +
+    kv("Sobra", brl(margem), margem >= 0 ? "verde" : "vermelho") +
+    '</div>';
+
+  // funil
+  html += '<div class="cartao bloco"><h3>Conversão</h3>' +
+    '<p class="leg">Quantas reservas viram pagamento de fato.</p>' +
+    kv("Reservas criadas", fu.criadas) +
+    kv("Pagas", fu.pagas, "verde") +
+    kv("Expiraram", fu.expiradas) +
+    kv("Canceladas", fu.canceladas) +
+    kv("Taxa de conversão", conv + "%", conv >= 70 ? "verde" : "vermelho") +
+    kv("Bilhetes por venda", ticket.toFixed(1).replace(".", ",")) +
+    '</div>';
+
+  // horas
+  if(data.horas && data.horas.length){
+    const mapa = {}; data.horas.forEach(h => mapa[h.hora] = Number(h.bilhetes));
+    const max = Math.max(...Object.values(mapa), 1);
+    const pico = data.horas.reduce((a,b) => Number(b.bilhetes) > Number(a.bilhetes) ? b : a);
+    let barras = "";
+    for(let h = 0; h < 24; h++){
+      const q = mapa[h] || 0;
+      barras += '<div class="h" title="' + h + 'h: ' + q + ' bilhetes">' +
+        '<div class="b" style="height:' + (q/max*100) + '%"></div>' +
+        '<span class="l">' + (h % 3 === 0 ? h : "") + '</span></div>';
+    }
+    html += '<div class="cartao bloco"><h3>Bilhetes por hora</h3>' +
+      '<p class="leg">O pico é às ' + pico.hora + 'h. É a melhor hora para o vendedor divulgar.</p>' +
+      '<div class="horas">' + barras + '</div></div>';
+  }
+
+  // ranking
+  if(data.ranking && data.ranking.length){
+    html += '<div class="cartao bloco"><h3>Ranking de vendedores</h3>' +
+      '<p class="leg">Por valor vendido e pago no período.</p>' +
+      data.ranking.map((r, i) =>
+        '<div class="rank"><span class="rpos">' + (i+1) + '</span>' +
+        '<div><p class="rnome">' + esc(r.nome) + '</p>' +
+        '<p class="rsub">' + r.bilhetes + ' bilhetes · ' + Number(r.comissao_pct) + '%</p></div>' +
+        '<p class="rval">' + brl(r.vendido) + '<small>' + brl(r.comissao) + '</small></p></div>'
+      ).join("") + '</div>';
+  }
+
+  // compradores
+  if(data.compradores && data.compradores.length){
+    html += '<div class="cartao bloco"><h3>Compradores mais frequentes</h3>' +
+      '<p class="leg">Quem mais gastou no período.</p>' +
+      data.compradores.map((p, i) =>
+        '<div class="rank"><span class="rpos">' + (i+1) + '</span>' +
+        '<div><p class="rnome">' + esc(p.nome) + '</p>' +
+        '<p class="rsub">' + esc(tel(p.telefone)) + ' · ' + p.compras + ' compras</p></div>' +
+        '<p class="rval">' + brl(p.gasto) + '</p></div>'
+      ).join("") + '</div>';
+  }
+
+  $("analises").innerHTML = html;
+}
+
+function kv(k, v, cor){
+  return '<div class="kv"><span class="k">' + k + '</span>' +
+         '<span class="v' + (cor ? " " + cor : "") + '">' + v + '</span></div>';
+}
+
+// ============================================================
+// AJUSTES
+// ============================================================
+const CAMPOS = [
+  ["preco_centavos",          "Preço do bilhete",     "Em centavos. 200 = R$ 2,00.", "num"],
+  ["premio_inicial_centavos", "Prêmio base",          "Valor do ciclo quando não há acúmulo.", "num"],
+  ["premio_teto_centavos",    "Teto do prêmio",       "O acúmulo nunca passa disso.", "num"],
+  ["acumulo_modo",            "Modo de acúmulo",      "Dobrar estoura o caixa rápido. Percentual é o recomendado.", "modo"],
+  ["acumulo_percentual",      "Percentual do acúmulo","Quanto das vendas do ciclo entra no prêmio seguinte.", "num"],
+  ["reserva_minutos",         "Prazo da reserva",     "Minutos até o número voltar para a grade.", "num"],
+  ["pix_chave",               "Chave PIX",            "Aparece para o comprador na hora de pagar.", "txt"],
+  ["pix_nome",                "Nome do recebedor",    "Confirma para o comprador que o PIX é o certo.", "txt"],
+  ["whatsapp",                "WhatsApp do organizador","Só dígitos, com DDI. Ex. 5537999999999.", "txt"]
+];
+let configAtual = {};
+
+async function carregarAjustes(){
+  // prêmio do ciclo
+  const c = app.resumo && app.resumo.ciclo;
+  const editavel = c && ["agendado","aberto"].includes(c.status);
+  $("blocoPremio").innerHTML = c
+    ? '<div class="campo"><div class="cab"><span class="rot">Ciclo ' + c.numero_ciclo + '</span>' +
+      '<span class="v" style="font-family:\'DM Mono\',monospace;font-size:17px">' + brl(c.premio_centavos) + '</span></div>' +
+      '<p class="dica">' + (editavel
+        ? "Valor em centavos. Vale só para este ciclo — o próximo é calculado pelo acúmulo."
+        : "As vendas deste ciclo já fecharam. O prêmio não pode mais ser alterado.") + '</p>' +
+      (editavel
+        ? '<input id="cPremio" inputmode="numeric" value="' + c.premio_centavos + '">' +
+          '<button class="cta" id="btnSalvarPremio" style="margin-top:12px">Alterar prêmio</button>'
+        : '') +
+      '</div>'
+    : '<div class="vazio"><p>Nenhum ciclo carregado.</p></div>';
+
+  const bp = $("btnSalvarPremio");
+  if(bp) bp.addEventListener("click", async () => {
+    bp.disabled = true; bp.textContent = "Salvando…";
+    const { error } = await sb.rpc("admin_set_premio",
+      { p_ciclo_id: c.id, p_centavos: Number($("cPremio").value) });
+    bp.disabled = false; bp.textContent = "Alterar prêmio";
+    if(error){ toast(error.message, true); return; }
+    toast("Prêmio atualizado.");
+    await carregar(); carregarAjustes();
+  });
+
+  // parâmetros
+  const { data, error } = await sb.rpc("admin_config_listar");
+  if(error){ toast(error.message, true); return; }
+  configAtual = data || {};
+
+  $("blocoConfig").innerHTML = CAMPOS.map(([k, rot, dica, tipo]) => {
+    const val = esc(configAtual[k] ?? "");
+    const campo = tipo === "modo"
+      ? '<select id="cfg_' + k + '" style="width:100%;background:var(--bg);border:1px solid var(--linha);border-radius:11px;padding:12px 13px;font-family:Manrope,sans-serif;font-size:15px;color:var(--ink);margin-top:9px">' +
+        '<option value="percentual"' + (configAtual[k] === "percentual" ? " selected" : "") + '>Percentual das vendas</option>' +
+        '<option value="dobrar"' + (configAtual[k] === "dobrar" ? " selected" : "") + '>Dobrar o prêmio</option></select>'
+      : '<input id="cfg_' + k + '" ' + (tipo === "num" ? 'inputmode="numeric"' : '') + ' value="' + val + '">';
+    const espelho = ["preco_centavos","premio_inicial_centavos","premio_teto_centavos"].includes(k)
+      ? '<span class="dica" style="font-family:\'DM Mono\',monospace">' + brl(configAtual[k]) + '</span>' : '';
+    return '<div class="campo"><div class="cab"><span class="rot">' + rot + '</span>' + espelho + '</div>' +
+           '<p class="dica">' + dica + '</p>' + campo + '</div>';
+  }).join("");
+}
+
+$("btnSalvarConfig").addEventListener("click", async () => {
+  const b = $("btnSalvarConfig");
+  b.disabled = true; b.textContent = "Salvando…";
+
+  let mudou = 0, falhou = null;
+  for(const [k] of CAMPOS){
+    const el = $("cfg_" + k);
+    if(!el) continue;
+    const novo = String(el.value).trim();
+    if(novo === String(configAtual[k] ?? "")) continue;
+    const { error } = await sb.rpc("admin_config_salvar", { p_chave:k, p_valor:novo });
+    if(error){ falhou = error.message; break; }
+    mudou++;
+  }
+
+  b.disabled = false; b.textContent = "Salvar parâmetros";
+  if(falhou){ toast(falhou, true); return; }
+  toast(mudou ? mudou + " ajuste(s) salvo(s)." : "Nada mudou.");
+  if(mudou) carregarAjustes();
+});
+
+sb.auth.onAuthStateChange((evt) => { if(evt === "SIGNED_IN") carregarHistorico(); });
+setTimeout(carregarHistorico, 1200);
+
+verificarSessao();
+</script>
+</body>
+</html>
