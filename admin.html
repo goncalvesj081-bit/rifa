@@ -147,6 +147,91 @@ header{position:sticky;top:0;z-index:10;background:rgba(245,247,249,.9);
   background:var(--tint);color:var(--brand-dark)}
 .hres.acu{background:var(--aviso-tint);color:var(--aviso)}
 
+/* ---------- navegação ---------- */
+.nav{display:flex;gap:6px;margin-top:14px;background:var(--surface);border:1px solid var(--linha);
+  border-radius:12px;padding:4px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{flex:1;min-width:88px;background:none;border:0;border-radius:9px;padding:9px 10px;cursor:pointer;
+  color:var(--ink2);font-family:"Manrope",sans-serif;font-size:13.5px;font-weight:600;white-space:nowrap}
+.nav button[aria-selected="true"]{background:var(--ink);color:#fff}
+
+/* ---------- vendedores ---------- */
+.vend{padding:15px 16px}
+.vend .topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.vend .nome{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.vend .cod{font-family:"DM Mono",monospace;font-size:12.5px;color:var(--brand-dark);
+  background:var(--tint);border-radius:7px;padding:2px 7px;display:inline-block;margin-top:5px}
+.vend .pct{font-family:"DM Mono",monospace;font-size:19px;font-weight:500;white-space:nowrap}
+.vend .pct small{font-size:12px;color:var(--ink2)}
+.vend .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--linha);
+  border:1px solid var(--linha);border-radius:10px;overflow:hidden;margin-top:12px}
+.vend .cel{background:var(--surface);padding:9px 10px;text-align:center}
+.vend .cel .k{font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em}
+.vend .cel .v{font-family:"DM Mono",monospace;font-size:14px;font-weight:500;margin-top:2px}
+.vend .rodape{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.inativo{opacity:.6}
+.tagoff{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;
+  background:var(--bg);color:var(--ink2);margin-left:7px}
+
+/* ---------- ajustes ---------- */
+.campo{padding:15px 16px;border-bottom:1px solid var(--linha)}
+.campo:last-child{border-bottom:0}
+.campo .cab{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.campo .rot{font-size:14px;font-weight:600}
+.campo .dica{font-size:12px;color:var(--ink2);margin-top:3px;line-height:1.45}
+.campo input,.campo select{margin-top:9px;font-family:"DM Mono",monospace;font-size:15px}
+.campo select{appearance:none;background-image:none}
+.alertabox{display:flex;gap:10px;padding:14px 16px;background:var(--aviso-tint);border-radius:12px;
+  margin-top:14px;font-size:13px;color:#7A4A00;line-height:1.5}
+.alertabox svg{color:var(--aviso);flex-shrink:0;margin-top:1px}
+
+/* ---------- análises ---------- */
+.periodo{display:flex;gap:7px;margin-top:14px}
+.periodo button{flex:1;background:var(--surface);border:1px solid var(--linha);border-radius:10px;
+  padding:9px;cursor:pointer;color:var(--ink2);font-family:"Manrope",sans-serif;font-size:13px;font-weight:600}
+.periodo button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.bloco{margin-top:14px;padding:17px 18px}
+.bloco h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.bloco .leg{font-size:12px;color:var(--ink2);line-height:1.45}
+.kv{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;
+  border-bottom:1px solid var(--linha)}
+.kv:last-child{border-bottom:0}
+.kv .k{font-size:13.5px;color:var(--ink2)}
+.kv .v{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;font-size:16px;font-weight:500}
+.kv .v.verde{color:var(--brand-dark)}
+.kv .v.vermelho{color:var(--alerta)}
+.horas{display:flex;align-items:flex-end;gap:3px;height:96px;margin-top:14px}
+.horas .h{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.horas .b{width:100%;background:var(--brand);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
+.horas .l{font-family:"DM Mono",monospace;font-size:8.5px;color:var(--ink3)}
+.rank{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--linha)}
+.rank:last-child{border-bottom:0}
+.rpos{font-family:"DM Mono",monospace;font-size:13px;color:var(--ink3);width:18px}
+.rnome{font-size:14px;font-weight:600}
+.rsub{font-size:12px;color:var(--ink2);margin-top:1px}
+.rval{font-family:"DM Mono",monospace;font-size:14px;font-weight:500;text-align:right;white-space:nowrap}
+.rval small{display:block;font-size:11px;color:var(--brand-dark);font-weight:400}
+
+/* ---------- bottom sheet ---------- */
+.fundo{position:fixed;inset:0;z-index:40;background:rgba(13,27,42,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.fundo.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+  border-radius:20px 20px 0 0;box-shadow:var(--sh2);
+  padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow-y:auto;transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.fundo.on .sheet{transform:none}
+.sheet .pega{width:38px;height:4px;background:var(--linha);border-radius:999px;margin:0 auto 18px}
+.sheet h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.sheet .desc{font-size:13.5px;color:var(--ink2);margin-top:6px;line-height:1.55}
+.sheet .par{display:flex;gap:11px}
+.sheet .par > div{flex:1}
+.acoes{display:flex;gap:9px;margin-top:22px}
+.acoes .cta{flex:1;margin-top:0;padding:15px}
+.acoes .btn2{flex:0 0 auto;padding:15px 20px}
+
 .toast{position:fixed;left:16px;right:16px;bottom:20px;z-index:50;max-width:520px;margin:0 auto;
   background:var(--ink);color:#fff;border-radius:12px;padding:13px 16px;font-size:14px;font-weight:600;
   box-shadow:var(--sh2);transform:translateY(140%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
@@ -190,6 +275,9 @@ header{position:sticky;top:0;z-index:10;background:rgba(245,247,249,.9);
   </header>
 
   <div class="wrap">
+    <nav class="nav" id="nav" role="tablist"></nav>
+
+    <section id="vVendas">
     <div class="stats">
       <div class="stat"><p class="k">Recebido</p><p class="v verde" id="sRecebido">—</p></div>
       <div class="stat"><p class="k">A receber</p><p class="v laranja" id="sReceber">—</p></div>
@@ -214,9 +302,41 @@ header{position:sticky;top:0;z-index:10;background:rgba(245,247,249,.9);
 
     <div class="secao"><h2>Ciclos anteriores</h2></div>
     <div class="cartao hist" id="hist"></div>
+    </section>
+
+    <!-- ---------------- vendedores ---------------- -->
+    <section id="vVendedores" class="oculto">
+      <div class="secao">
+        <h2>Vendedores</h2>
+        <button class="linkbtn" id="btnNovoVendedor">Cadastrar</button>
+      </div>
+      <div class="lista" id="listaVendedores"></div>
+    </section>
+
+    <!-- ---------------- análises ---------------- -->
+    <section id="vAnalises" class="oculto">
+      <div class="periodo" id="periodo"></div>
+      <div id="analises"></div>
+    </section>
+
+    <!-- ---------------- ajustes ---------------- -->
+    <section id="vAjustes" class="oculto">
+      <div class="secao"><h2>Prêmio do ciclo</h2></div>
+      <div class="cartao" id="blocoPremio"></div>
+
+      <div class="secao"><h2>Parâmetros</h2></div>
+      <div class="cartao" id="blocoConfig"></div>
+      <button class="cta" id="btnSalvarConfig" style="margin-top:16px">Salvar parâmetros</button>
+
+      <div class="alertabox">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16.5v.01"/></svg>
+        <span>Mudar o preço do bilhete vale para as próximas reservas, não para as já feitas. Mudar o prêmio depois que as vendas começaram é permitido, mas quem já comprou apostou no valor anterior.</span>
+      </div>
+    </section>
   </div>
 </div>
 
+<div class="fundo" id="fundo"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -271,6 +391,7 @@ $("btnSair").addEventListener("click", async () => {
 function entrarNoPainel(){
   $("telaLogin").classList.add("oculto");
   $("telaPainel").classList.remove("oculto");
+  montarNav();
   montarAbas();
   carregar();
   app.poll = setInterval(carregar, 20000);
@@ -417,7 +538,8 @@ function pintarLista(){
     return '<div class="cartao venda" data-id="' + v.id + '">' +
       '<div class="topo">' +
         '<div><p class="nome">' + esc(v.comprador_nome) + '</p>' +
-        '<p class="meta">' + esc(tel(v.comprador_telefone)) + ' · nº ' + v.id + '</p></div>' +
+        '<p class="meta">' + esc(tel(v.comprador_telefone)) + ' · nº ' + v.id +
+          (v.vendedor_nome ? ' · ' + esc(v.vendedor_nome) : '') + '</p></div>' +
         '<p class="valor">' + brl(v.valor_centavos) + '</p>' +
       '</div>' +
       '<p class="nums">' + nums + '</p>' +
@@ -485,11 +607,15 @@ $("lista").addEventListener("click", async e => {
 // ---------------- CSV ----------------
 $("btnCsv").addEventListener("click", () => {
   if(!app.vendas.length){ toast("Nada para exportar com esse filtro."); return; }
-  const cab = ["reserva","nome","telefone","numeros","quantidade","valor","status","criado_em","pago_em"];
+  const cab = ["reserva","nome","telefone","numeros","quantidade","valor",
+               "vendedor","codigo","comissao_pct","comissao","status","criado_em","pago_em"];
+  const dec = c => (Number(c||0)/100).toFixed(2).replace(".", ",");
   const linhas = app.vendas.map(v => [
     v.id, v.comprador_nome, v.comprador_telefone,
-    (v.numeros||[]).map(pad).join(" "), v.quantidade,
-    (Number(v.valor_centavos)/100).toFixed(2).replace(".", ","),
+    (v.numeros||[]).map(pad).join(" "), v.quantidade, dec(v.valor_centavos),
+    v.vendedor_nome || "", v.vendedor_codigo || "",
+    v.comissao_pct == null ? "" : String(v.comissao_pct).replace(".", ","),
+    v.comissao_centavos == null ? "" : dec(v.comissao_centavos),
     v.status, v.criado_em || "", v.pago_em || ""
   ]);
   const csv = [cab, ...linhas]
@@ -518,6 +644,357 @@ async function carregarHistorico(){
         (c.teve_ganhador ? 'pago ' + brl(c.premio_centavos) : 'acumulou') + '</span>' +
     '</div>').join("");
 }
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+const VIEWS = [
+  ["vendas",     "Vendas",     "vVendas"],
+  ["vendedores", "Vendedores", "vVendedores"],
+  ["analises",   "Análises",   "vAnalises"],
+  ["ajustes",    "Ajustes",    "vAjustes"]
+];
+let viewAtual = "vendas";
+
+function montarNav(){
+  const el = $("nav"); el.innerHTML = "";
+  VIEWS.forEach(([id, nome]) => {
+    const b = document.createElement("button");
+    b.setAttribute("role","tab");
+    b.setAttribute("aria-selected", viewAtual === id ? "true" : "false");
+    b.textContent = nome;
+    b.addEventListener("click", () => trocarView(id));
+    el.appendChild(b);
+  });
+}
+
+function trocarView(id){
+  viewAtual = id;
+  VIEWS.forEach(([v, , sec]) => $(sec).classList.toggle("oculto", v !== id));
+  montarNav();
+  window.scrollTo({ top:0, behavior:"instant" });
+  if(id === "vendedores") carregarVendedores();
+  if(id === "analises")   carregarAnalises();
+  if(id === "ajustes")    carregarAjustes();
+}
+
+// ---------------- bottom sheet ----------------
+function abrirSheet(html){ $("sheet").innerHTML = '<div class="pega"></div>' + html; $("fundo").classList.add("on"); }
+function fecharSheet(){ $("fundo").classList.remove("on"); }
+$("fundo").addEventListener("click", e => { if(e.target === $("fundo")) fecharSheet(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") fecharSheet(); });
+
+// ============================================================
+// VENDEDORES
+// ============================================================
+let vendedores = [];
+
+async function carregarVendedores(){
+  const { data, error } = await sb.rpc("admin_vendedores");
+  if(error){ toast(error.message, true); return; }
+  vendedores = data || [];
+  pintarVendedores();
+}
+
+function linkDoVendedor(codigo){
+  return location.origin + location.pathname.replace(/admin\.html$/, "") +
+         "index.html?v=" + encodeURIComponent(codigo);
+}
+
+function pintarVendedores(){
+  const el = $("listaVendedores");
+  if(!vendedores.length){
+    el.innerHTML = '<div class="cartao vazio">' +
+      '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>' +
+      '<p>Nenhum vendedor cadastrado ainda.</p></div>';
+    return;
+  }
+
+  el.innerHTML = vendedores.map(v =>
+    '<div class="cartao vend' + (v.ativo ? '' : ' inativo') + '" data-id="' + v.id + '">' +
+      '<div class="topo">' +
+        '<div><p class="nome">' + esc(v.nome) +
+          (v.ativo ? '' : '<span class="tagoff">inativo</span>') + '</p>' +
+          '<span class="cod">' + esc(v.codigo) + '</span>' +
+          (v.user_id ? '' : '<span class="tagoff">sem login</span>') +
+        '</div>' +
+        '<p class="pct">' + Number(v.comissao_pct) + '<small>%</small></p>' +
+      '</div>' +
+      '<div class="grid">' +
+        '<div class="cel"><p class="k">Vendas</p><p class="v">' + v.vendas_pagas + '</p></div>' +
+        '<div class="cel"><p class="k">Vendido</p><p class="v">' + brl(v.total_vendido) + '</p></div>' +
+        '<div class="cel"><p class="k">Comissão</p><p class="v">' + brl(v.total_comissao) + '</p></div>' +
+      '</div>' +
+      '<div class="rodape">' +
+        '<button class="mini" data-a="editar">Editar</button>' +
+        '<button class="mini" data-a="link">Copiar link</button>' +
+      '</div>' +
+    '</div>').join("");
+}
+
+$("listaVendedores").addEventListener("click", async e => {
+  const b = e.target.closest(".mini");
+  if(!b) return;
+  const id = Number(b.closest(".vend").dataset.id);
+  const v  = vendedores.find(x => x.id === id);
+  if(!v) return;
+
+  if(b.dataset.a === "link"){
+    try{ await navigator.clipboard.writeText(linkDoVendedor(v.codigo)); toast("Link copiado."); }
+    catch(err){ toast(linkDoVendedor(v.codigo)); }
+    return;
+  }
+  formVendedor(v);
+});
+
+$("btnNovoVendedor").addEventListener("click", () => formVendedor(null));
+
+function formVendedor(v){
+  const novo = !v;
+  abrirSheet(
+    '<h2>' + (novo ? "Novo vendedor" : "Editar vendedor") + '</h2>' +
+    '<p class="desc">O código vira o link de divulgação. Use algo curto e fácil de ditar.</p>' +
+    '<label for="fNome">Nome</label><input id="fNome" value="' + esc(v ? v.nome : "") + '">' +
+    '<div class="par">' +
+      '<div><label for="fCodigo">Código</label>' +
+        '<input id="fCodigo" placeholder="ex. joao" value="' + esc(v ? v.codigo : "") + '"></div>' +
+      '<div><label for="fPct">Comissão %</label>' +
+        '<input id="fPct" inputmode="decimal" value="' + (v ? Number(v.comissao_pct) : 10) + '"></div>' +
+    '</div>' +
+    '<label for="fTel">WhatsApp <span style="font-weight:400;color:var(--ink3)">— opcional</span></label>' +
+    '<input id="fTel" inputmode="tel" value="' + esc(v && v.telefone ? v.telefone : "") + '">' +
+    '<label for="fUser">UUID do usuário <span style="font-weight:400;color:var(--ink3)">— opcional</span></label>' +
+    '<input id="fUser" placeholder="cole de Authentication → Users" value="' + esc(v && v.user_id ? v.user_id : "") + '" style="font-family:\'DM Mono\',monospace;font-size:13px">' +
+    '<p class="desc" style="margin-top:7px">Sem o UUID o vendedor recebe comissão, mas não consegue entrar no painel dele.</p>' +
+    '<label for="fAtivo">Situação</label>' +
+    '<select id="fAtivo" style="width:100%;background:var(--bg);border:1px solid var(--linha);border-radius:11px;padding:12px 13px;font-family:Manrope,sans-serif;font-size:16px;color:var(--ink)">' +
+      '<option value="1"' + (!v || v.ativo ? " selected" : "") + '>Ativo</option>' +
+      '<option value="0"' + (v && !v.ativo ? " selected" : "") + '>Inativo</option>' +
+    '</select>' +
+    '<div id="fErro"></div>' +
+    '<div class="acoes"><button class="btn2" id="fVoltar">Cancelar</button>' +
+    '<button class="cta" id="fSalvar">Salvar</button></div>'
+  );
+  $("fVoltar").addEventListener("click", fecharSheet);
+  $("fSalvar").addEventListener("click", () => salvarVendedor(v ? v.id : null));
+}
+
+async function salvarVendedor(id){
+  const b = $("fSalvar"), box = $("fErro");
+  const uuid = $("fUser").value.trim();
+  box.innerHTML = "";
+
+  if(uuid && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)){
+    box.innerHTML = '<p class="erro">O UUID não parece válido. Copie exatamente como aparece em Authentication → Users.</p>';
+    return;
+  }
+
+  b.disabled = true; b.textContent = "Salvando…";
+  const { data, error } = await sb.rpc("admin_vendedor_salvar", {
+    p_id: id,
+    p_nome: $("fNome").value.trim(),
+    p_telefone: $("fTel").value.trim() || null,
+    p_codigo: $("fCodigo").value.trim(),
+    p_comissao_pct: Number(String($("fPct").value).replace(",", ".")),
+    p_ativo: $("fAtivo").value === "1",
+    p_user_id: uuid || null
+  });
+  b.disabled = false; b.textContent = "Salvar";
+
+  if(error){ box.innerHTML = '<p class="erro">' + esc(error.message) + '</p>'; return; }
+  fecharSheet();
+  toast("Vendedor salvo. Código: " + data.codigo);
+  carregarVendedores();
+}
+
+// ============================================================
+// ANÁLISES
+// ============================================================
+const PERIODOS = [[7,"7 ciclos"],[30,"30 ciclos"],[90,"90 ciclos"]];
+let periodoAtual = 30;
+
+function montarPeriodo(){
+  const el = $("periodo"); el.innerHTML = "";
+  PERIODOS.forEach(([n, nome]) => {
+    const b = document.createElement("button");
+    b.setAttribute("aria-selected", periodoAtual === n ? "true" : "false");
+    b.textContent = nome;
+    b.addEventListener("click", () => { periodoAtual = n; montarPeriodo(); carregarAnalises(); });
+    el.appendChild(b);
+  });
+}
+
+async function carregarAnalises(){
+  montarPeriodo();
+  $("analises").innerHTML = '<div class="cartao vazio"><p>Carregando…</p></div>';
+
+  const { data, error } = await sb.rpc("admin_analytics", { p_ciclos: periodoAtual });
+  if(error){ toast(error.message, true); return; }
+  if(!data || data.vazio){
+    $("analises").innerHTML = '<div class="cartao vazio"><p>Ainda não há ciclos para analisar.</p></div>';
+    return;
+  }
+
+  const f = data.financeiro, c = data.ciclos, fu = data.funil;
+  const margem = Number(f.arrecadado) - Number(f.comissoes) - Number(c.premios_pagos);
+  const conv = Number(fu.criadas) ? Math.round(Number(fu.pagas)/Number(fu.criadas)*100) : 0;
+  const ticket = Number(f.vendas) ? (Number(f.bilhetes)/Number(f.vendas)) : 0;
+
+  let html = "";
+
+  // financeiro
+  html += '<div class="cartao bloco"><h3>Resultado do período</h3>' +
+    '<p class="leg">' + c.ciclos + ' ciclos · ' + c.com_ganhador + ' com ganhador · ' +
+      c.acumulados + ' acumulados</p>' +
+    kv("Arrecadado", brl(f.arrecadado), "verde") +
+    kv("Comissões", "− " + brl(f.comissoes)) +
+    kv("Prêmios pagos", "− " + brl(c.premios_pagos)) +
+    kv("Sobra", brl(margem), margem >= 0 ? "verde" : "vermelho") +
+    '</div>';
+
+  // funil
+  html += '<div class="cartao bloco"><h3>Conversão</h3>' +
+    '<p class="leg">Quantas reservas viram pagamento de fato.</p>' +
+    kv("Reservas criadas", fu.criadas) +
+    kv("Pagas", fu.pagas, "verde") +
+    kv("Expiraram", fu.expiradas) +
+    kv("Canceladas", fu.canceladas) +
+    kv("Taxa de conversão", conv + "%", conv >= 70 ? "verde" : "vermelho") +
+    kv("Bilhetes por venda", ticket.toFixed(1).replace(".", ",")) +
+    '</div>';
+
+  // horas
+  if(data.horas && data.horas.length){
+    const mapa = {}; data.horas.forEach(h => mapa[h.hora] = Number(h.bilhetes));
+    const max = Math.max(...Object.values(mapa), 1);
+    const pico = data.horas.reduce((a,b) => Number(b.bilhetes) > Number(a.bilhetes) ? b : a);
+    let barras = "";
+    for(let h = 0; h < 24; h++){
+      const q = mapa[h] || 0;
+      barras += '<div class="h" title="' + h + 'h: ' + q + ' bilhetes">' +
+        '<div class="b" style="height:' + (q/max*100) + '%"></div>' +
+        '<span class="l">' + (h % 3 === 0 ? h : "") + '</span></div>';
+    }
+    html += '<div class="cartao bloco"><h3>Bilhetes por hora</h3>' +
+      '<p class="leg">O pico é às ' + pico.hora + 'h. É a melhor hora para o vendedor divulgar.</p>' +
+      '<div class="horas">' + barras + '</div></div>';
+  }
+
+  // ranking
+  if(data.ranking && data.ranking.length){
+    html += '<div class="cartao bloco"><h3>Ranking de vendedores</h3>' +
+      '<p class="leg">Por valor vendido e pago no período.</p>' +
+      data.ranking.map((r, i) =>
+        '<div class="rank"><span class="rpos">' + (i+1) + '</span>' +
+        '<div><p class="rnome">' + esc(r.nome) + '</p>' +
+        '<p class="rsub">' + r.bilhetes + ' bilhetes · ' + Number(r.comissao_pct) + '%</p></div>' +
+        '<p class="rval">' + brl(r.vendido) + '<small>' + brl(r.comissao) + '</small></p></div>'
+      ).join("") + '</div>';
+  }
+
+  // compradores
+  if(data.compradores && data.compradores.length){
+    html += '<div class="cartao bloco"><h3>Compradores mais frequentes</h3>' +
+      '<p class="leg">Quem mais gastou no período.</p>' +
+      data.compradores.map((p, i) =>
+        '<div class="rank"><span class="rpos">' + (i+1) + '</span>' +
+        '<div><p class="rnome">' + esc(p.nome) + '</p>' +
+        '<p class="rsub">' + esc(tel(p.telefone)) + ' · ' + p.compras + ' compras</p></div>' +
+        '<p class="rval">' + brl(p.gasto) + '</p></div>'
+      ).join("") + '</div>';
+  }
+
+  $("analises").innerHTML = html;
+}
+
+function kv(k, v, cor){
+  return '<div class="kv"><span class="k">' + k + '</span>' +
+         '<span class="v' + (cor ? " " + cor : "") + '">' + v + '</span></div>';
+}
+
+// ============================================================
+// AJUSTES
+// ============================================================
+const CAMPOS = [
+  ["preco_centavos",          "Preço do bilhete",     "Em centavos. 200 = R$ 2,00.", "num"],
+  ["premio_inicial_centavos", "Prêmio base",          "Valor do ciclo quando não há acúmulo.", "num"],
+  ["premio_teto_centavos",    "Teto do prêmio",       "O acúmulo nunca passa disso.", "num"],
+  ["acumulo_modo",            "Modo de acúmulo",      "Dobrar estoura o caixa rápido. Percentual é o recomendado.", "modo"],
+  ["acumulo_percentual",      "Percentual do acúmulo","Quanto das vendas do ciclo entra no prêmio seguinte.", "num"],
+  ["reserva_minutos",         "Prazo da reserva",     "Minutos até o número voltar para a grade.", "num"],
+  ["pix_chave",               "Chave PIX",            "Aparece para o comprador na hora de pagar.", "txt"],
+  ["pix_nome",                "Nome do recebedor",    "Confirma para o comprador que o PIX é o certo.", "txt"],
+  ["whatsapp",                "WhatsApp do organizador","Só dígitos, com DDI. Ex. 5537999999999.", "txt"]
+];
+let configAtual = {};
+
+async function carregarAjustes(){
+  // prêmio do ciclo
+  const c = app.resumo && app.resumo.ciclo;
+  const editavel = c && ["agendado","aberto"].includes(c.status);
+  $("blocoPremio").innerHTML = c
+    ? '<div class="campo"><div class="cab"><span class="rot">Ciclo ' + c.numero_ciclo + '</span>' +
+      '<span class="v" style="font-family:\'DM Mono\',monospace;font-size:17px">' + brl(c.premio_centavos) + '</span></div>' +
+      '<p class="dica">' + (editavel
+        ? "Valor em centavos. Vale só para este ciclo — o próximo é calculado pelo acúmulo."
+        : "As vendas deste ciclo já fecharam. O prêmio não pode mais ser alterado.") + '</p>' +
+      (editavel
+        ? '<input id="cPremio" inputmode="numeric" value="' + c.premio_centavos + '">' +
+          '<button class="cta" id="btnSalvarPremio" style="margin-top:12px">Alterar prêmio</button>'
+        : '') +
+      '</div>'
+    : '<div class="vazio"><p>Nenhum ciclo carregado.</p></div>';
+
+  const bp = $("btnSalvarPremio");
+  if(bp) bp.addEventListener("click", async () => {
+    bp.disabled = true; bp.textContent = "Salvando…";
+    const { error } = await sb.rpc("admin_set_premio",
+      { p_ciclo_id: c.id, p_centavos: Number($("cPremio").value) });
+    bp.disabled = false; bp.textContent = "Alterar prêmio";
+    if(error){ toast(error.message, true); return; }
+    toast("Prêmio atualizado.");
+    await carregar(); carregarAjustes();
+  });
+
+  // parâmetros
+  const { data, error } = await sb.rpc("admin_config_listar");
+  if(error){ toast(error.message, true); return; }
+  configAtual = data || {};
+
+  $("blocoConfig").innerHTML = CAMPOS.map(([k, rot, dica, tipo]) => {
+    const val = esc(configAtual[k] ?? "");
+    const campo = tipo === "modo"
+      ? '<select id="cfg_' + k + '" style="width:100%;background:var(--bg);border:1px solid var(--linha);border-radius:11px;padding:12px 13px;font-family:Manrope,sans-serif;font-size:15px;color:var(--ink);margin-top:9px">' +
+        '<option value="percentual"' + (configAtual[k] === "percentual" ? " selected" : "") + '>Percentual das vendas</option>' +
+        '<option value="dobrar"' + (configAtual[k] === "dobrar" ? " selected" : "") + '>Dobrar o prêmio</option></select>'
+      : '<input id="cfg_' + k + '" ' + (tipo === "num" ? 'inputmode="numeric"' : '') + ' value="' + val + '">';
+    const espelho = ["preco_centavos","premio_inicial_centavos","premio_teto_centavos"].includes(k)
+      ? '<span class="dica" style="font-family:\'DM Mono\',monospace">' + brl(configAtual[k]) + '</span>' : '';
+    return '<div class="campo"><div class="cab"><span class="rot">' + rot + '</span>' + espelho + '</div>' +
+           '<p class="dica">' + dica + '</p>' + campo + '</div>';
+  }).join("");
+}
+
+$("btnSalvarConfig").addEventListener("click", async () => {
+  const b = $("btnSalvarConfig");
+  b.disabled = true; b.textContent = "Salvando…";
+
+  let mudou = 0, falhou = null;
+  for(const [k] of CAMPOS){
+    const el = $("cfg_" + k);
+    if(!el) continue;
+    const novo = String(el.value).trim();
+    if(novo === String(configAtual[k] ?? "")) continue;
+    const { error } = await sb.rpc("admin_config_salvar", { p_chave:k, p_valor:novo });
+    if(error){ falhou = error.message; break; }
+    mudou++;
+  }
+
+  b.disabled = false; b.textContent = "Salvar parâmetros";
+  if(falhou){ toast(falhou, true); return; }
+  toast(mudou ? mudou + " ajuste(s) salvo(s)." : "Nada mudou.");
+  if(mudou) carregarAjustes();
+});
 
 sb.auth.onAuthStateChange((evt) => { if(evt === "SIGNED_IN") carregarHistorico(); });
 setTimeout(carregarHistorico, 1200);
