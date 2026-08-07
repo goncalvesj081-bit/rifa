@@ -71,6 +71,13 @@ header{
 .stat .v{font-family:"DM Mono",monospace;font-variant-numeric:tabular-nums;font-size:19px;font-weight:500;margin-top:3px;letter-spacing:-.01em}
 .stat .v.urgente{color:var(--alerta)}
 
+/* ---------- indicação ---------- */
+.indicacao{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;
+  background:var(--tint);border:1px solid transparent;border-radius:12px}
+.indicacao svg{color:var(--brand);flex-shrink:0}
+.indicacao p{font-size:13px;color:var(--brand-dark);line-height:1.4}
+.indicacao b{font-weight:700}
+
 /* ---------- progresso ---------- */
 .progresso{margin-top:14px;padding:16px 18px}
 .progresso .topo{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
@@ -229,6 +236,11 @@ header{
     </div>
   </div>
 
+  <div class="indicacao oculto" id="indicacao">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 11 2 2 4-4"/></svg>
+    <p id="indicacaoTxt"></p>
+  </div>
+
   <div class="cartao progresso">
     <div class="topo">
       <span>Números já tomados</span>
@@ -283,16 +295,40 @@ header{
 <div class="fundo" id="fundo"><div class="sheet" id="sheet"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
 <script>
-// ============================================================
-const SUPABASE_URL  = "https://SEU_PROJETO.supabase.co";
-const SUPABASE_ANON = "SUA_ANON_KEY";
-// ============================================================
+// Credenciais ficam em config.js, na raiz do repositorio.
+const { SUPABASE_URL, SUPABASE_ANON } = window.RIFA_CONFIG || {};
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const $  = id => document.getElementById(id);
 
-const estado = { ciclo:null, cfg:{}, ocupados:new Set(), sel:new Set(), cartela:0, timer:null };
+const estado = { ciclo:null, cfg:{}, ocupados:new Set(), sel:new Set(), cartela:0, timer:null,
+                 codigo:null, vendedor:null };
+
+// ---------------- código do vendedor ----------------
+// Vem por ?v=CODIGO e fica guardado, para o caso de a pessoa
+// voltar depois pelo histórico do navegador.
+const CHAVE_CODIGO = "rifa_vendedor";
+
+function guardar(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+function ler(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+
+async function resolverVendedor(){
+  const url = new URLSearchParams(location.search).get("v");
+  const cod = (url || ler(CHAVE_CODIGO) || "").trim();
+  if(!cod) return;
+
+  try{
+    const { data } = await sb.rpc("vendedor_por_codigo", { p_codigo: cod });
+    if(!data){ if(url) guardar(CHAVE_CODIGO, ""); return; }
+    estado.codigo   = data.codigo;
+    estado.vendedor = data.nome;
+    guardar(CHAVE_CODIGO, data.codigo);
+    $("indicacaoTxt").innerHTML = "Compra indicada por <b>" + esc(data.nome) + "</b>";
+    $("indicacao").classList.remove("oculto");
+  }catch(e){ /* código inválido não bloqueia a venda */ }
+}
 
 const brl = c => (c/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const pad = n => String(n).padStart(3,"0");
@@ -304,6 +340,8 @@ async function iniciar(){
     const { data: cfg } = await sb.from("config_publica").select("chave,valor");
     (cfg||[]).forEach(r => estado.cfg[r.chave] = r.valor);
     $("preco").textContent = brl(Number(estado.cfg.preco_centavos || 200));
+
+    await resolverVendedor();
 
     const { data: ciclos } = await sb.from("ciclo_publico")
       .select("*").order("numero_ciclo",{ascending:false}).limit(1);
@@ -491,7 +529,7 @@ async function enviarReserva(nums){
   box.innerHTML = ""; ok.disabled = true; ok.textContent = "Enviando…";
 
   const { data, error } = await sb.rpc("reservar_numeros",
-    { p_numeros:nums, p_nome:nome, p_telefone:tel });
+    { p_numeros:nums, p_nome:nome, p_telefone:tel, p_codigo:estado.codigo });
 
   ok.disabled = false; ok.textContent = "Reservar";
   if(error){ box.innerHTML = '<p class="erro">' + esc(error.message || "Não foi possível reservar. Tente de novo.") + '</p>'; return; }
